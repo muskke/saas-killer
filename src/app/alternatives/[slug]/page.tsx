@@ -20,7 +20,7 @@ export async function generateStaticParams() {
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params; // 👈 关键修复：先解包！
   const tools = await getAllTools();
-  const tool = tools[slug];
+  const tool = tools.find((t: any) => t.slug === slug);
   
   if (!tool) return {};
   
@@ -34,7 +34,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 export default async function Page({ params }: Props) {
   const { slug } = await params; // 👈 关键修复：先解包！
   const tools = await getAllTools();
-  const tool = tools[slug];
+  const tool = tools.find((t: any) => t.slug === slug);
 
   if (!tool) notFound();
 
@@ -106,6 +106,41 @@ export default async function Page({ params }: Props) {
             <h3 className="text-xl font-bold text-emerald-900 mb-6 flex items-center gap-2">
               <span className="text-2xl">👍</span> Why use {tool.name}?
             </h3>
+            {/* 🔥 武器二：对比拦截器 - 截获 "X vs Y" 搜索流量 */}
+            <div className="mt-16 bg-white rounded-3xl p-8 border border-gray-100 shadow-sm">
+              <h3 className="text-2xl font-black mb-8 text-center">
+                How it stacks up against <span className="text-red-500 line-through">Proprietary Apps</span>
+              </h3>
+              
+              <div className="grid grid-cols-3 gap-4 border-b border-gray-100 pb-4 mb-4 text-xs font-bold uppercase tracking-widest text-gray-400">
+                <div>Feature</div>
+                <div className="text-center">{tool.name}</div>
+                <div className="text-center">Proprietary SaaS</div>
+              </div>
+
+              {/* 1. 成本对比 */}
+              <div className="grid grid-cols-3 gap-4 py-4 border-b border-gray-50 items-center">
+                <div className="font-bold text-gray-600">Cost</div>
+                <div className="text-center text-green-600 font-bold bg-green-50 py-2 rounded-lg">FREE (Self-hosted)</div>
+                <div className="text-center text-red-600 font-bold bg-red-50 py-2 rounded-lg">$10 - $50 / mo</div>
+              </div>
+
+              {/* 2. 数据掌控 */}
+              <div className="grid grid-cols-3 gap-4 py-4 border-b border-gray-50 items-center">
+                <div className="font-bold text-gray-600">Data Ownership</div>
+                <div className="text-center text-gray-900 font-medium">100% Yours (On-premise)</div>
+                <div className="text-center text-gray-400">Cloud Locked (Third-party)</div>
+              </div>
+
+              {/* 3. AI 动态对比 (利用之前脚本里的 alternatives 字段) */}
+              <div className="grid grid-cols-3 gap-4 py-4 items-center">
+                <div className="font-bold text-gray-600">Main Focus</div>
+                <div className="text-center text-indigo-600 font-bold">{tool.category}</div>
+                <div className="text-center text-gray-900 font-medium italic">
+                  {tool.rich_features?.alternatives?.[0] || "Standard SaaS"}
+                </div>
+              </div>
+            </div>
             <ul className="space-y-4">
               {(tool.rich_features?.pros || ["Open Source", "Self-hosted"]).map((pro: string, i: number) => (
                 <li key={i} className="flex items-start gap-3">

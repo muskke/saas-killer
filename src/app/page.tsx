@@ -1,13 +1,11 @@
 import { getAllTools } from '@/lib/db';
 import ToolGrid from '@/components/ToolGrid';
+import Newsletter from '@/components/Newsletter';
 
 export default async function Home() {
   // 1. Server Side Fetching (SEO 友好)
-  const toolsMap = await getAllTools();
-  const tools = Object.values(toolsMap).sort((a, b) => b.stars - a.stars).slice(0, 100);
-  
-  // 提取分类
-  const categories = Array.from(new Set(tools.map(t => t.category))).filter(Boolean);
+  const tools = await getAllTools(); 
+  const categories = Array.from(new Set(tools.map((t: any) => t.category))).filter(Boolean);
 
   return (
     <main className="min-h-screen bg-gray-50 font-sans text-gray-900">
@@ -29,6 +27,7 @@ export default async function Home() {
       {/* 2. Client Side Interaction (交互引擎) */}
       {/* 我们把数据传给 ToolGrid，让它在浏览器里处理搜索 */}
       <ToolGrid tools={tools} categories={categories} />
+      <Newsletter />
 
       {/* Footer */}
       <footer className="bg-white border-t border-gray-200 py-12 text-center text-gray-400 text-sm">

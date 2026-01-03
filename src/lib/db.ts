@@ -14,15 +14,20 @@ export interface Tool {
   summary?: string;
 }
 
-export async function getAllTools(): Promise<Record<string, Tool>> {
-  // 找到 data/alternatives.json 的绝对路径
+export async function getAllTools() {
   const filePath = path.join(process.cwd(), 'data', 'alternatives.json');
-  
   try {
     const fileContents = await fs.readFile(filePath, 'utf8');
-    return JSON.parse(fileContents);
+    const toolsMap = JSON.parse(fileContents);
+    const tools = Object.values(toolsMap);
+
+    // 🔥 商业逻辑：置顶付费广告 (Promoted) > 星星数量 (Stars)
+    return tools.sort((a: any, b: any) => {
+      if (a.promoted && !b.promoted) return -1;
+      if (!a.promoted && b.promoted) return 1;
+      return b.stars - a.stars;
+    });
   } catch (error) {
-    console.error("❌ 找不到数据文件！请确保 data/alternatives.json 存在。");
-    return {};
+    return [];
   }
 }
