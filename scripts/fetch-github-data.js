@@ -6,9 +6,13 @@ const path = require('path');
 // CONFIGURATION
 // We target specific "High CPC" niches. Don't just search "random".
 const SEARCH_QUERIES = [
-  'topic:open-source-alternative', 
-  'topic:self-hosted', 
-  'privacy-focused alternative'
+  "topic:open-source-alternative",
+  "topic:self-hosted",
+  "privacy-focused alternative",
+  "notion alternative", // 直接搜竞品名
+  "shopify alternative",
+  "airtable alternative",
+  "slack alternative",
 ];
 const MIN_STARS = 1000; // We only want popular tools
 const OUTPUT_FILE = path.join(__dirname, '../data/alternatives.json');
@@ -33,37 +37,74 @@ const VALID_CATEGORIES = [
   "Authentication", "Database"
 ];
 
-async function classifyRepo(repoName, description, topics) {
-  // 模拟 OpenAI/DeepSeek 调用
-  // In production: const completion = await openai.chat.completions.create(...)
-  
-  console.log(`🧠 AI is classifying: ${repoName}...`);
-  
-  const prompt = `
-    Analyze this GitHub repo:
-    Name: "${repoName}"
-    Description: "${description}"
-    Tags: "${topics.join(', ')}"
-    
-    Task: specificy which ONE category from this list fits best: [${VALID_CATEGORIES.join(', ')}].
-    If it fits none, return "DevTools" as fallback.
-    Output: ONLY the category name. No explanations.
-  `;
+function classifyRepo(repoName, description, topics) {
+  const text = (description + " " + topics.join(" ")).toLowerCase();
 
-  // 这里为了演示，我写一个伪逻辑。
-  // 实际上你要把 prompt 发给 LLM。
-  if (description.includes("cms") || description.includes("blog")) return "CMS";
-  if (description.includes("crm") || description.includes("customer")) return "CRM";
-  if (description.includes("shop") || description.includes("store")) return "E-commerce";
-  
-  return "DevTools"; // Fallback
+  // 规则引擎：关键词匹配
+  if (text.includes("crm") || text.includes("customer")) return "CRM";
+  if (
+    text.includes("cms") ||
+    text.includes("content management") ||
+    text.includes("strapi") ||
+    text.includes("ghost")
+  )
+    return "CMS";
+  if (
+    text.includes("analytic") ||
+    text.includes("tracking") ||
+    text.includes("matomo") ||
+    text.includes("plausible")
+  )
+    return "Analytics";
+  if (
+    text.includes("auth") ||
+    text.includes("login") ||
+    text.includes("sso") ||
+    text.includes("keycloak")
+  )
+    return "Authentication";
+  if (
+    text.includes("database") ||
+    text.includes("sql") ||
+    text.includes("db") ||
+    text.includes("supabase")
+  )
+    return "Database";
+  if (
+    text.includes("video") ||
+    text.includes("photo") ||
+    text.includes("media") ||
+    text.includes("immich")
+  )
+    return "Media";
+  if (
+    text.includes("note") ||
+    text.includes("writing") ||
+    text.includes("editor") ||
+    text.includes("notion")
+  )
+    return "Productivity";
+  if (
+    text.includes("shop") ||
+    text.includes("commerce") ||
+    text.includes("store")
+  )
+    return "E-commerce";
+  if (
+    text.includes("deploy") ||
+    text.includes("docker") ||
+    text.includes("ci/cd")
+  )
+    return "DevOps";
+
+  return "DevTools"; // 只有完全匹配不到的才去这里
 }
 
 async function fetchRepoData(query) {
   console.log(`🔥 Hunting for data: "${query}"...`);
   try {
     // GitHub Search API
-    const url = `https://api.github.com/search/repositories?q=${encodeURIComponent(query)}&sort=stars&order=desc&per_page=20`;
+    const url = `https://api.github.com/search/repositories?q=${encodeURIComponent(query)}&sort=stars&order=desc&per_page=200`;
     const response = await axios.get(url, { headers });
     return response.data.items;
   } catch (error) {

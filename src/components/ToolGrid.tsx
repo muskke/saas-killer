@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
+import AdBanner from './AdBanner';
 
 // 定义数据类型 (保持和 db.ts 一致)
 type Tool = {
@@ -66,9 +67,40 @@ export default function ToolGrid({ tools, categories }: { tools: Tool[], categor
         </div>
       </div>
 
+          <AdBanner category={activeCategory} />
+          
       {/* --- A: 视觉升级网格 (Logos + Cards) --- */}
       {filteredTools.length > 0 ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  
+                  {/* 🔥 $$$ 强力插入：赞助商广告位 (The Money Maker) $$$ */}
+          <div className="group flex flex-col bg-gradient-to-br from-indigo-900 to-blue-800 rounded-xl p-6 shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1 border border-indigo-700 relative overflow-hidden">
+            {/* 标签 */}
+            <div className="absolute top-0 right-0 bg-yellow-400 text-yellow-900 text-xs font-bold px-3 py-1 rounded-bl-lg z-10">
+              SPONSORED
+            </div>
+            
+            <div className="flex items-center gap-3 mb-4 z-10">
+              <div className="w-12 h-12 rounded-xl bg-white flex items-center justify-center text-2xl">
+                ☁️
+              </div>
+              <div>
+                <h3 className="font-bold text-white text-lg">DigitalOcean</h3>
+                <p className="text-indigo-200 text-xs">Recommended Host</p>
+              </div>
+            </div>
+            
+            <p className="text-indigo-100 text-sm mb-4 flex-grow z-10">
+              Don't just look at code—deploy it. Get <strong>$200 free credit</strong> to host any of these open-source tools instantly.
+            </p>
+            
+            <a href="https://m.do.co/c/YOUR_AFFILIATE_CODE" target="_blank" className="mt-auto w-full bg-white text-indigo-900 font-bold py-2 rounded-lg text-center hover:bg-gray-100 transition-colors z-10">
+              Claim $200 Credit &rarr;
+            </a>
+            
+            {/* 装饰背景 */}
+            <div className="absolute -bottom-4 -right-4 w-24 h-24 bg-white opacity-10 rounded-full blur-xl"></div>
+          </div>
           {filteredTools.map((tool) => (
             <Link href={`/alternatives/${tool.slug}`} key={tool.slug} className="group flex flex-col bg-white rounded-xl p-6 shadow-sm hover:shadow-xl transition-all duration-300 border border-gray-100 hover:border-indigo-100 transform hover:-translate-y-1">
               
