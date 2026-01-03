@@ -65,39 +65,72 @@ export default async function Page({ params }: Props) {
       <AdBanner category={tool.category} />
       
       {/* 详情数据区 */}
-      <div className="grid md:grid-cols-2 gap-8">
-        <div className="bg-white p-6 rounded-xl border border-gray-100 shadow-sm">
-           <h3 className="font-bold text-gray-900 mb-4 flex items-center">
-             🚀 Project Stats
-           </h3>
-           <ul className="space-y-3 text-sm">
-             <li className="flex justify-between">
-               <span className="text-gray-500">Stars</span>
-               <span className="font-mono font-bold text-amber-500">★ {tool.stars.toLocaleString()}</span>
-             </li>
-             <li className="flex justify-between">
-               <span className="text-gray-500">Category</span>
-               <span className="font-semibold bg-indigo-50 text-indigo-700 px-2 py-0.5 rounded">
-                 {tool.category}
-               </span>
-             </li>
-             <li className="flex justify-between">
-               <span className="text-gray-500">License</span>
-               <span className="font-mono">{tool.license}</span>
-             </li>
-           </ul>
+      <div className="grid md:grid-cols-3 gap-8 mt-8">
+        
+        {/* 左侧：核心参数 (占 1 列) */}
+        <div className="col-span-1 space-y-6">
+           <div className="bg-white p-6 rounded-xl border border-gray-100 shadow-sm">
+             <h3 className="font-bold text-gray-900 mb-4">📊 Project Stats</h3>
+             {/* ... (原来的 Stars/License 代码) ... */}
+             <div className="mt-4 pt-4 border-t border-gray-100">
+               <span className="text-xs text-gray-400 uppercase font-bold tracking-wider">Best For</span>
+               <p className="font-medium text-indigo-900 mt-1">
+                 {tool.rich_features?.best_for || "Developers"}
+               </p>
+             </div>
+             <div className="mt-4">
+               <span className="text-xs text-gray-400 uppercase font-bold tracking-wider">Replaces</span>
+               <div className="flex flex-wrap gap-2 mt-1">
+                 {(tool.rich_features?.alternatives || ["SaaS"]).map((alt: string) => (
+                   <span key={alt} className="text-xs bg-red-50 text-red-600 px-2 py-1 rounded border border-red-100 line-through decoration-red-400">
+                     {alt}
+                   </span>
+                 ))}
+               </div>
+             </div>
+           </div>
+           
+           {/* 广告位放在这里 */}
+           <div className="bg-indigo-900 text-white p-6 rounded-xl text-center">
+              <p className="font-bold mb-2">Deploy {tool.name}</p>
+              <p className="text-sm opacity-80 mb-4">Get $200 free credit on DigitalOcean</p>
+              <a href="..." className="block bg-white text-indigo-900 font-bold py-2 rounded-lg text-sm">Start Free</a>
+           </div>
         </div>
 
-        <div className="bg-indigo-50 p-6 rounded-xl border border-indigo-100 flex flex-col justify-center items-center text-center">
-          <p className="text-indigo-900 font-bold mb-2">Ready to try it?</p>
-          <a 
-            href={tool.url || `https://github.com/search?q=${tool.name}`} 
-            target="_blank"
-            className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-8 rounded-full transition-all transform hover:scale-105 shadow-lg w-full md:w-auto"
-          >
-            Visit Website &rarr;
-          </a>
-          <p className="text-xs text-indigo-400 mt-3">External Link</p>
+        {/* 右侧：AI 深度点评 (占 2 列) - 核心价值区 */}
+        <div className="col-span-1 md:col-span-2 space-y-6">
+          
+          {/* 优点卡片 */}
+          <div className="bg-emerald-50/50 p-8 rounded-2xl border border-emerald-100">
+            <h3 className="text-xl font-bold text-emerald-900 mb-6 flex items-center gap-2">
+              <span className="text-2xl">👍</span> Why use {tool.name}?
+            </h3>
+            <ul className="space-y-4">
+              {(tool.rich_features?.pros || ["Open Source", "Self-hosted"]).map((pro: string, i: number) => (
+                <li key={i} className="flex items-start gap-3">
+                  <div className="w-6 h-6 rounded-full bg-emerald-200 text-emerald-800 flex items-center justify-center text-xs font-bold shrink-0">✓</div>
+                  <span className="text-emerald-900 leading-relaxed">{pro}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          {/* 缺点卡片 (显得客观，增加信任感) */}
+          <div className="bg-orange-50/50 p-8 rounded-2xl border border-orange-100">
+            <h3 className="text-xl font-bold text-orange-900 mb-6 flex items-center gap-2">
+              <span className="text-2xl">⚠️</span> Things to consider
+            </h3>
+            <ul className="space-y-4">
+              {(tool.rich_features?.cons || ["Setup required"]).map((con: string, i: number) => (
+                <li key={i} className="flex items-start gap-3">
+                  <div className="w-6 h-6 rounded-full bg-orange-200 text-orange-800 flex items-center justify-center text-xs font-bold shrink-0">!</div>
+                  <span className="text-orange-900 leading-relaxed">{con}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+
         </div>
       </div>
     </main>
