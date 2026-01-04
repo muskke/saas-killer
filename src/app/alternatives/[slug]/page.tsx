@@ -2,170 +2,203 @@ import { notFound } from 'next/navigation';
 import { getAllTools } from '@/lib/db';
 import type { Metadata } from 'next';
 import AdBanner from '@/components/AdBanner';
+import { CheckCircle2, AlertCircle, ExternalLink, Star, Shield, Zap } from 'lucide-react';
 
-// 定义类型：注意！Params 现在是 Promise 了！
 type Props = {
   params: Promise<{ slug: string }>;
 };
 
-// 1. 静态生成参数 (这个不需要变，因为它是在构建时运行的)
 export async function generateStaticParams() {
   const tools = await getAllTools();
-  return Object.keys(tools).map((slug) => ({
-    slug: slug,
-  }));
+  return tools.map((tool: any) => ({ slug: tool.slug }));
 }
 
-// 2. 动态 Meta 标签 (必须 await params)
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const { slug } = await params; // 👈 关键修复：先解包！
+  const { slug } = await params;
   const tools = await getAllTools();
   const tool = tools.find((t: any) => t.slug === slug);
-  
-  if (!tool) return {};
-  
-  return {
-    title: `${tool.name} - Open Source Alternative`,
-    description: tool.description,
-  };
+  if (!tool) return { title: 'Tool Not Found' };
+  return { title: `${tool.name} - Open Source Alternative to ${tool.rich_features?.alternatives?.[0] || 'SaaS'}` };
 }
 
-// 3. 页面内容 (必须 await params)
 export default async function Page({ params }: Props) {
-  const { slug } = await params; // 👈 关键修复：先解包！
+  const { slug } = await params;
   const tools = await getAllTools();
   const tool = tools.find((t: any) => t.slug === slug);
 
   if (!tool) notFound();
 
   return (
-    <main className="max-w-4xl mx-auto px-4 py-12 font-sans">
-      {/* 顶部 Header */}
-      <div className="mb-8 border-b border-gray-200 pb-8">
-        <div className="flex items-center gap-4 mb-4">
-           {/* 显示 Logo */}
-           <div className="w-16 h-16 rounded-2xl bg-gray-50 border border-gray-200 flex items-center justify-center overflow-hidden">
-             {tool.logo ? (
-                <img src={tool.logo} alt={tool.name} className="w-full h-full object-cover" />
-             ) : (
-                <span className="text-2xl font-bold text-indigo-500">{tool.name.charAt(0)}</span>
-             )}
-           </div>
-           <div>
-             <h1 className="text-4xl font-black text-gray-900">{tool.name}</h1>
-             <p className="text-gray-500 font-mono text-sm">{tool.full_name}</p>
-           </div>
-        </div>
-        
-        <p className="text-xl text-gray-700 leading-relaxed max-w-2xl">
-          {tool.description}
-        </p>
+    <main className="min-h-screen bg-[#F9FAFB] pb-20">
+      {/* 1. 顶部面包屑/返回 */}
+      <div className="max-w-7xl mx-auto px-4 py-6">
+        <a href="/" className="text-sm text-gray-500 hover:text-indigo-600 transition-colors flex items-center gap-1">
+          ← Back to Directory
+        </a>
       </div>
 
-      <AdBanner category={tool.category} />
-      
-      {/* 详情数据区 */}
-      <div className="grid md:grid-cols-3 gap-8 mt-8">
-        
-        {/* 左侧：核心参数 (占 1 列) */}
-        <div className="col-span-1 space-y-6">
-           <div className="bg-white p-6 rounded-xl border border-gray-100 shadow-sm">
-             <h3 className="font-bold text-gray-900 mb-4">📊 Project Stats</h3>
-             {/* ... (原来的 Stars/License 代码) ... */}
-             <div className="mt-4 pt-4 border-t border-gray-100">
-               <span className="text-xs text-gray-400 uppercase font-bold tracking-wider">Best For</span>
-               <p className="font-medium text-indigo-900 mt-1">
-                 {tool.rich_features?.best_for || "Developers"}
-               </p>
-             </div>
-             <div className="mt-4">
-               <span className="text-xs text-gray-400 uppercase font-bold tracking-wider">Replaces</span>
-               <div className="flex flex-wrap gap-2 mt-1">
-                 {(tool.rich_features?.alternatives || ["SaaS"]).map((alt: string) => (
-                   <span key={alt} className="text-xs bg-red-50 text-red-600 px-2 py-1 rounded border border-red-100 line-through decoration-red-400">
-                     {alt}
-                   </span>
-                 ))}
-               </div>
-             </div>
-           </div>
-           
-           {/* 广告位放在这里 */}
-           <div className="bg-indigo-900 text-white p-6 rounded-xl text-center">
-              <p className="font-bold mb-2">Deploy {tool.name}</p>
-              <p className="text-sm opacity-80 mb-4">Get $200 free credit on DigitalOcean</p>
-              <a href="..." className="block bg-white text-indigo-900 font-bold py-2 rounded-lg text-sm">Start Free</a>
-           </div>
+      <div className="max-w-7xl mx-auto px-4">
+        {/* 2. 核心头部 (Hero) */}
+        <div className="bg-white rounded-3xl p-8 md:p-12 shadow-sm border border-gray-100 mb-8">
+          <div className="flex flex-col md:flex-row justify-between items-start gap-8">
+            <div className="flex gap-6 items-center">
+              <div className="w-20 h-20 rounded-2xl bg-gray-50 border border-gray-100 flex items-center justify-center overflow-hidden shrink-0 shadow-inner">
+                {tool.logo ? (
+                  <img src={tool.logo} alt={tool.name} className="w-full h-full object-contain p-2" />
+                ) : (
+                  <span className="text-3xl font-black text-indigo-500">{tool.name.charAt(0)}</span>
+                )}
+              </div>
+              <div>
+                <h1 className="text-4xl md:text-5xl font-black text-gray-900 tracking-tight mb-2">{tool.name}</h1>
+                <p className="text-lg text-gray-500 font-medium">
+                  Alternative to{' '}
+                  <span className="text-indigo-600 font-bold">
+                    {/* 优先读取 AI 生成的单一竞品名，如果没有，再尝试读旧的列表，最后兜底 */}
+                    {tool.rich_features?.competitor_name || tool.rich_features?.alternatives?.[0] || 'SaaS Tools'}
+                  </span>
+                </p>
+              </div>
+            </div>
+            <div className="flex flex-col items-end gap-3">
+              <div className="flex items-center gap-2 bg-amber-50 text-amber-600 px-4 py-2 rounded-xl font-bold border border-amber-100">
+                <Star size={20} fill="currentColor" />
+                {(tool.stars / 1000).toFixed(1)}k Stars
+              </div>
+              <a href={tool.url} target="_blank" className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-8 py-3 rounded-xl font-bold transition-all shadow-lg shadow-indigo-200">
+                Visit Source <ExternalLink size={18} />
+              </a>
+            </div>
+          </div>
         </div>
 
-        {/* 右侧：AI 深度点评 (占 2 列) - 核心价值区 */}
-        <div className="col-span-1 md:col-span-2 space-y-6">
+        {/* 3. 广告拦截位 */}
+        <AdBanner category={tool.category} />
+
+        {/* 4. 两栏布局：左侧参数，右侧深度分析 */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           
-          {/* 优点卡片 */}
-          <div className="bg-emerald-50/50 p-8 rounded-2xl border border-emerald-100">
-            <h3 className="text-xl font-bold text-emerald-900 mb-6 flex items-center gap-2">
-              <span className="text-2xl">👍</span> Why use {tool.name}?
-            </h3>
-            {/* 🔥 武器二：对比拦截器 - 截获 "X vs Y" 搜索流量 */}
-            <div className="mt-16 bg-white rounded-3xl p-8 border border-gray-100 shadow-sm">
-              <h3 className="text-2xl font-black mb-8 text-center">
-                How it stacks up against <span className="text-red-500 line-through">Proprietary Apps</span>
+          {/* 左侧边栏 (Stats) */}
+          <div className="space-y-6">
+            <div className="bg-white p-8 rounded-3xl border border-gray-100 shadow-sm">
+              <h3 className="text-lg font-bold text-gray-900 mb-6 flex items-center gap-2">
+                <Shield size={20} className="text-indigo-500" /> Project Info
               </h3>
-              
-              <div className="grid grid-cols-3 gap-4 border-b border-gray-100 pb-4 mb-4 text-xs font-bold uppercase tracking-widest text-gray-400">
-                <div>Feature</div>
-                <div className="text-center">{tool.name}</div>
-                <div className="text-center">Proprietary SaaS</div>
-              </div>
-
-              {/* 1. 成本对比 */}
-              <div className="grid grid-cols-3 gap-4 py-4 border-b border-gray-50 items-center">
-                <div className="font-bold text-gray-600">Cost</div>
-                <div className="text-center text-green-600 font-bold bg-green-50 py-2 rounded-lg">FREE (Self-hosted)</div>
-                <div className="text-center text-red-600 font-bold bg-red-50 py-2 rounded-lg">$10 - $50 / mo</div>
-              </div>
-
-              {/* 2. 数据掌控 */}
-              <div className="grid grid-cols-3 gap-4 py-4 border-b border-gray-50 items-center">
-                <div className="font-bold text-gray-600">Data Ownership</div>
-                <div className="text-center text-gray-900 font-medium">100% Yours (On-premise)</div>
-                <div className="text-center text-gray-400">Cloud Locked (Third-party)</div>
-              </div>
-
-              {/* 3. AI 动态对比 (利用之前脚本里的 alternatives 字段) */}
-              <div className="grid grid-cols-3 gap-4 py-4 items-center">
-                <div className="font-bold text-gray-600">Main Focus</div>
-                <div className="text-center text-indigo-600 font-bold">{tool.category}</div>
-                <div className="text-center text-gray-900 font-medium italic">
-                  {tool.rich_features?.alternatives?.[0] || "Standard SaaS"}
+              <div className="space-y-4">
+                <div className="flex justify-between py-3 border-b border-gray-50">
+                  <span className="text-gray-400">License</span>
+                  <span className="font-mono font-bold text-gray-700">{tool.license}</span>
+                </div>
+                <div className="flex justify-between py-3 border-b border-gray-50">
+                  <span className="text-gray-400">Category</span>
+                  <span className="font-bold text-indigo-600">{tool.category}</span>
+                </div>
+                <div className="py-3">
+                  <span className="text-gray-400 block mb-2">Ideal For</span>
+                  <span className="inline-block bg-gray-100 text-gray-700 px-3 py-1 rounded-lg text-sm font-bold">
+                    {tool.rich_features?.best_for || 'General Use'}
+                  </span>
                 </div>
               </div>
             </div>
-            <ul className="space-y-4">
-              {(tool.rich_features?.pros || ["Open Source", "Self-hosted"]).map((pro: string, i: number) => (
-                <li key={i} className="flex items-start gap-3">
-                  <div className="w-6 h-6 rounded-full bg-emerald-200 text-emerald-800 flex items-center justify-center text-xs font-bold shrink-0">✓</div>
-                  <span className="text-emerald-900 leading-relaxed">{pro}</span>
-                </li>
-              ))}
-            </ul>
           </div>
 
-          {/* 缺点卡片 (显得客观，增加信任感) */}
-          <div className="bg-orange-50/50 p-8 rounded-2xl border border-orange-100">
-            <h3 className="text-xl font-bold text-orange-900 mb-6 flex items-center gap-2">
-              <span className="text-2xl">⚠️</span> Things to consider
-            </h3>
-            <ul className="space-y-4">
-              {(tool.rich_features?.cons || ["Setup required"]).map((con: string, i: number) => (
-                <li key={i} className="flex items-start gap-3">
-                  <div className="w-6 h-6 rounded-full bg-orange-200 text-orange-800 flex items-center justify-center text-xs font-bold shrink-0">!</div>
-                  <span className="text-orange-900 leading-relaxed">{con}</span>
-                </li>
-              ))}
-            </ul>
-          </div>
+          {/* 右侧主栏 (Analysis) */}
+          <div className="lg:col-span-2 space-y-8">
+            {/* 优点与挑战 */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="bg-emerald-50/50 p-8 rounded-3xl border border-emerald-100">
+                <h4 className="text-lg font-bold text-emerald-900 mb-4 flex items-center gap-2">
+                  <CheckCircle2 className="text-emerald-500" /> Key Pros
+                </h4>
+                <ul className="space-y-3">
+                  {tool.rich_features?.pros?.map((p: string, i: number) => (
+                    <li key={i} className="text-emerald-800 text-sm leading-relaxed flex gap-2">
+                      <span className="shrink-0">•</span> {p}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+              <div className="bg-rose-50/50 p-8 rounded-3xl border border-rose-100">
+                <h4 className="text-lg font-bold text-rose-900 mb-4 flex items-center gap-2">
+                  <AlertCircle className="text-rose-500" /> Challenges
+                </h4>
+                <ul className="space-y-3">
+                  {tool.rich_features?.cons?.map((c: string, i: number) => (
+                    <li key={i} className="text-rose-800 text-sm leading-relaxed flex gap-2">
+                      <span className="shrink-0">•</span> {c}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </div>
 
+            {/* 核心对比表格 (AI Powered) */}
+            <div className="bg-white rounded-3xl border border-gray-100 shadow-sm overflow-hidden mt-12">
+              <div className="bg-gray-900 p-6 text-white flex justify-between items-center">
+                <h3 className="text-xl font-bold flex items-center gap-2">
+                  <Zap className="text-yellow-400" /> 
+                  <span>The "SaaS Tax" Calculator</span> 
+                </h3>
+                <span className="text-xs bg-gray-800 px-3 py-1 rounded-full text-gray-400 uppercase tracking-wider font-bold">
+                  VS {tool.rich_features?.competitor_name || 'Proprietary SaaS'}
+                </span>
+              </div>
+              
+              <div className="p-0">
+                <table className="w-full text-left border-collapse table-fixed">
+                  <thead>
+                    <tr className="bg-gray-50 border-b border-gray-100">
+                      <th className="p-6 text-xs font-bold text-gray-400 uppercase w-1/3">Feature</th>
+                      <th className="p-6 text-xs font-bold text-indigo-600 uppercase text-center w-1/3">{tool.name}</th>
+                      <th className="p-6 text-xs font-bold text-gray-400 uppercase text-center w-1/3">
+                        {tool.rich_features?.competitor_name || 'SaaS'}
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-50">
+                    {/* 🔥 动态渲染 AI 生成的 3 行数据 */}
+                    {(tool.rich_features?.comparison_table || []).map((row: any, index: number) => (
+                      <tr key={index}>
+                        <td className="p-6 text-sm font-bold text-gray-700 flex items-center gap-2">
+                          {row.feature}
+                          {/* 如果是第一行(价格)，加个小火苗 */}
+                          {index === 0 && <span className="text-xs text-orange-500">🔥</span>}
+                        </td>
+                        
+                        {/* 我方 (OS) */}
+                        <td className="p-6 text-center">
+                          <div className="inline-flex items-center gap-1.5 bg-emerald-100 text-emerald-800 px-3 py-1.5 rounded-lg text-sm font-bold border border-emerald-200">
+                            <CheckCircle2 size={14} />
+                            {row.os_value}
+                          </div>
+                        </td>
+
+                        {/* 敌方 (SaaS) */}
+                        <td className="p-6 text-center">
+                          <div className={`inline-flex items-center gap-1.5 text-sm font-medium ${index === 0 ? 'text-red-500 font-bold' : 'text-gray-500'}`}>
+                            {/* 只有价格行加删除线，其他行正常显示 */}
+                            <span className={index === 0 ? "line-through decoration-red-300" : ""}>
+                              {row.saas_value}
+                            </span>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                    
+                    {/* ⚠️ 万一 AI 没生成数据 (Fallback)，显示默认行，防止表格塌陷 */}
+                    {(!tool.rich_features?.comparison_table) && (
+                       <tr>
+                         <td className="p-6 text-center text-gray-400 italic" colSpan={3}>
+                           AI analysis pending...
+                         </td>
+                       </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </main>

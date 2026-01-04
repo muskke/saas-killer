@@ -2,7 +2,7 @@ require("dotenv").config();
 const axios = require("axios");
 const fs = require("fs").promises;
 const path = require("path");
-const OpenAI = require("openai"); // 👈 引入大脑
+const OpenAI = require("openai");
 
 // 初始化 AI (这里以 Gemini 为例，兼容 OpenAI 格式)
 const openai = new OpenAI({
@@ -10,156 +10,100 @@ const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
 
-// CONFIGURATION
-// We target specific "High CPC" niches. Don't just search "random".
+// 搜索关键词 (保持你的撒网策略)
 const SEARCH_QUERIES = [
   "topic:open-source-alternative",
   "topic:self-hosted",
   "privacy-focused alternative",
-  "notion alternative", // 直接搜竞品名
+  "notion alternative",
   "shopify alternative",
   "airtable alternative",
   "slack alternative",
 ];
-const MIN_STARS = 1000; // We only want popular tools
-const OUTPUT_FILE = path.join(__dirname, "../data/alternatives.json");
 
-// HEADERS (To look like a legit developer, not a bot)
-const headers = {
-  Authorization: process.env.GITHUB_TOKEN
-    ? `token ${process.env.GITHUB_TOKEN}`
-    : undefined,
-  Accept: "application/vnd.github.v3+json",
-  "User-Agent": "VentureTyrant-Scraper/1.0",
-};
+// 🔥 核心配置：批处理大小
+// 建议设置为 5-10。太大容易导致 AI 响应超时或 JSON 截断。
+const BATCH_SIZE = 8;
 
-const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
-
-// ---------------------------------------------------------
-// AI CLASSIFIER MODULE
-// ---------------------------------------------------------
-
-// 1. 定义高价值的 SaaS 类别（High CPC Niches）
-const VALID_CATEGORIES = [
-  "Project Management",
-  "CRM",
-  "CMS",
-  "E-commerce",
-  "Analytics",
-  "DevTools",
-  "Design",
-  "Communication",
-  "Authentication",
-  "Database",
-];
-
-function classifyRepo(repoName, description, topics) {
-  const text = (description + " " + topics.join(" ")).toLowerCase();
-
-  // 规则引擎：关键词匹配
-  if (text.includes("crm") || text.includes("customer")) return "CRM";
-  if (
-    text.includes("cms") ||
-    text.includes("content management") ||
-    text.includes("strapi") ||
-    text.includes("ghost")
-  )
-    return "CMS";
-  if (
-    text.includes("analytic") ||
-    text.includes("tracking") ||
-    text.includes("matomo") ||
-    text.includes("plausible")
-  )
-    return "Analytics";
-  if (
-    text.includes("auth") ||
-    text.includes("login") ||
-    text.includes("sso") ||
-    text.includes("keycloak")
-  )
-    return "Authentication";
-  if (
-    text.includes("database") ||
-    text.includes("sql") ||
-    text.includes("db") ||
-    text.includes("supabase")
-  )
-    return "Database";
-  if (
-    text.includes("video") ||
-    text.includes("photo") ||
-    text.includes("media") ||
-    text.includes("immich")
-  )
-    return "Media";
-  if (
-    text.includes("note") ||
-    text.includes("writing") ||
-    text.includes("editor") ||
-    text.includes("notion")
-  )
-    return "Productivity";
-  if (
-    text.includes("shop") ||
-    text.includes("commerce") ||
-    text.includes("store")
-  )
-    return "E-commerce";
-  if (
-    text.includes("deploy") ||
-    text.includes("docker") ||
-    text.includes("ci/cd")
-  )
-    return "DevOps";
-
-  return "DevTools"; // 只有完全匹配不到的才去这里
+// 辅助函数：将数组切块
+function chunkArray(array, size) {
+  const chunks = [];
+  for (let i = 0; i < array.length; i += size) {
+    chunks.push(array.slice(i, i + size));
+  }
+  return chunks;
 }
 
+// 模拟延迟 (避免并发过高炸掉接口)
+const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
 async function fetchRepoData(query) {
-  console.log(`🔥 Hunting for data: "${query}"...`);
+  console.log(`\n🔍 Hunting for data: "${query}"...`);
   try {
-    // GitHub Search API
-    const url = `https://api.github.com/search/repositories?q=${encodeURIComponent(
-      query
-    )}&sort=stars&order=desc&per_page=200`;
-    const response = await axios.get(url, { headers });
+    const response = await axios.get(
+      `https://api.github.com/search/repositories`,
+      {
+        headers: {
+          Authorization: `token ${process.env.GITHUB_TOKEN}`,
+          Accept: "application/vnd.github.v3+json",
+        },
+        params: { q: query, sort: "stars", order: "desc", per_page: 50 }, // 抓多点，反正我们会批量处理
+      }
+    );
     return response.data.items;
   } catch (error) {
-    console.error(
-      `❌ Failed to fetch ${query}:`,
-      error.response ? error.response.statusText : error.message
-    );
+    console.error(`❌ GitHub API Error: ${error.message}`);
     return [];
   }
 }
 
-// 🔥 核心升级：AI 深度分析函数
-async function analyzeToolWithAI(repo) {
-  console.log(`🧠 AI is analyzing: ${repo.name}...`);
+// 🔥 核心升级：批量 AI 分析函数
+async function analyzeBatchWithAI(repos) {
+  const toolsList = repos
+    .map(
+      (r) => `- Name: "${r.name}", Desc: "${r.description || "No description"}"`
+    )
+    .join("\n");
 
+  console.log(`🧠 AI is analyzing a batch of ${repos.length} tools...`);
+
+  // 这里的 Prompt 极其关键，要求 AI 返回以 repo.name 为 Key 的大 JSON
   const prompt = `
-    Analyze the GitHub repository "${repo.name}" (Description: "${repo.description}").
+    Analyze the following list of Open Source tools:
+    ${toolsList}
+
+    Task: Return a STRICT JSON object where the KEY is the tool name (lowercase) and the VALUE is the analysis object.
     
-    Task: Return a strict JSON object with the following fields:
-    1. "category": Choose ONE from [CMS, CRM, Analytics, DevTools, E-commerce, Productivity, Design, Finance, Communication, Database].
+    For EACH tool, the analysis object must contain:
+    1. "category": Choose ONE from [CMS, CRM, Analytics, DevTools, E-commerce, Productivity, Design, Finance, Communication, Database, Media].
     2. "tagline": A catchy, marketing-style one-liner (max 10 words).
-    3. "pros": An array of 3 distinct advantages (strings).
-    4. "cons": An array of 3 potential downsides or limitations (strings).
-    5. "best_for": Who is the ideal user? (e.g. "Freelancers", "Enterprise").
-    6. "alternatives": List 2 famous proprietary SaaS tools this replaces (e.g. "Notion, Airtable").
+    3. "competitor_name": The SINGLE most famous SaaS tool this replaces (e.g. "Notion", "Shopify").
+    4. "comparison_table": An array of EXACTLY 3 objects comparing the Open Source tool (OS) vs the SaaS Competitor.
+       - Row 1: "Pricing" (e.g. OS: "Free", SaaS: "$20/mo")
+       - Row 2: "Killer Feature" (e.g. "Storage Limit")
+       - Row 3: "Data Privacy" (e.g. OS: "Self-hosted", SaaS: "Data Mining")
+       Format: { "feature": "String", "os_value": "String", "saas_value": "String" }
+    5. "best_for": Who is the ideal user?
+    6. "pros": Array of 3 strings.
+    7. "cons": Array of 3 strings.
+
+    Output format example:
+    {
+      "appflowy": { "category": "Productivity", ... },
+      "n8n": { "category": "DevTools", ... }
+    }
     
-    Output strictly JSON. No markdown formatting.
+    IMPORTANT: Return ONLY valid JSON. No Markdown.
   `;
 
   try {
     const completion = await openai.chat.completions.create({
       messages: [{ role: "user", content: prompt }],
-      model: "gemini-2.5-flash-lite", // 或者是 "gpt-4o-mini"
-      // 注意：某些模型不支持 response_format: { type: "json_object" }，如果报错可以把这行删掉
+      model: "gemini-2.5-flash-lite", // 或 gpt-4o-mini
+      temperature: 0.1, //以此降低幻觉
     });
 
-    // --- 🧹 CLEANING PROTOCOL START ---
+    // 🧹 清洗数据
     let rawContent = completion.choices[0].message.content;
 
     // 1. 暴力撕掉 Markdown 的皮 (```json 和 ```)
@@ -174,37 +118,92 @@ async function analyzeToolWithAI(repo) {
 
     return aiData;
   } catch (error) {
-    console.error(`❌ AI Error for ${repo.name}:`, error.message);
-    if (error.response) console.error(error.response.data); // 如果有详细数据，也打印出来
-    return {
-      category: "DevTools",
-      tagline: repo.description,
-      pros: ["Open Source", "Self-hosted", "Free"],
-      cons: ["Requires setup", "Community support only", "Maintenance needed"],
-      best_for: "Developers",
-      alternatives: ["Unknown SaaS"],
-    };
+    console.error(`❌ AI Batch Error:`, error.message);
+    return {}; // 失败返回空对象，主程序会走 Fallback
   }
 }
 
+// 兜底数据生成器 (万一 AI 炸了或者漏了某个工具)
+function getFallbackData(item) {
+  return {
+    category: "DevTools",
+    tagline: item.description || "Open Source Alternative",
+    competitor_name: "Proprietary SaaS",
+    comparison_table: [
+      { feature: "Pricing", os_value: "Free", saas_value: "Paid" },
+      { feature: "Source Code", os_value: "Open", saas_value: "Closed" },
+      { feature: "Hosting", os_value: "Self-hosted", saas_value: "Cloud" },
+    ],
+    best_for: "Developers",
+    pros: ["Open Source", "Free", "Customizable"],
+    cons: ["Setup required", "Maintenance needed", "Less support"],
+  };
+}
+
 async function main() {
+  const filePath = path.join(__dirname, "../data/alternatives.json");
   let allTools = {};
 
+  // 读取现有数据 (避免重复抓取)
+  try {
+    const data = await fs.readFile(filePath, "utf8");
+    allTools = JSON.parse(data);
+  } catch (err) {
+    console.log("ℹ️ No existing data found, starting fresh.");
+  }
+
+  // 1. 收集所有要去重的工具
+  let rawItems = [];
   for (const query of SEARCH_QUERIES) {
     const items = await fetchRepoData(query);
+    rawItems = [...rawItems, ...items];
+    await delay(1000);
+  }
 
-    // ⚠️ 警告：AI 是要钱的。测试时建议只跑前 5 个！
-    // const itemsToProcess = items.slice(0, 5);
-    const itemsToProcess = items; // 正式跑全量时用这个
+  // 去重逻辑：只保留未入库的 或者 强制更新的
+  const uniqueItems = [];
+  const seen = new Set();
 
-    for (const item of itemsToProcess) {
-      if (allTools[item.name.toLowerCase()]) continue;
+  for (const item of rawItems) {
+    const slug = item.name.toLowerCase();
+    // 如果已经存在且有详细数据(comparison_table)，就跳过
+    if (allTools[slug] && allTools[slug].rich_features?.comparison_table)
+      continue;
 
-      // 🔥 调用 AI 获取深度数据
-      const aiData = await analyzeToolWithAI(item);
+    if (!seen.has(slug)) {
+      seen.add(slug);
+      uniqueItems.push(item);
+    }
+  }
 
-      allTools[item.name.toLowerCase()] = {
-        slug: item.name.toLowerCase(),
+  console.log(`\n📦 Total unique tools to analyze: ${uniqueItems.length}`);
+
+  // 2. 切片批处理 (Batch Processing)
+  const batches = chunkArray(uniqueItems, BATCH_SIZE);
+
+  for (let i = 0; i < batches.length; i++) {
+    const batch = batches[i];
+    console.log(
+      `\n🚀 Processing Batch ${i + 1}/${batches.length} (${
+        batch.length
+      } tools)...`
+    );
+
+    // 调用 AI 批量分析
+    const aiResults = await analyzeBatchWithAI(batch);
+
+    // 3. 将结果合并回主数据
+    for (const item of batch) {
+      const slug = item.name.toLowerCase();
+      // 尝试从 AI 结果里拿数据，拿不到就用 Fallback
+      const aiData = aiResults[slug] || getFallbackData(item);
+
+      if (!aiResults[slug]) {
+        console.warn(`⚠️ AI missed tool: ${item.name}, using fallback.`);
+      }
+
+      allTools[slug] = {
+        slug: slug,
         name: item.name,
         full_name: item.full_name,
         logo: item.owner.avatar_url,
@@ -212,39 +211,28 @@ async function main() {
         stars: item.stargazers_count,
         license: item.license ? item.license.spdx_id : "Unknown",
 
-        // 融合 AI 的智慧 👇
-        category: aiData.category, // 终于不再是全是 DevTools 了！
-        description: aiData.tagline, // 更有吸引力的短语
+        // 存入 AI 数据
+        category: aiData.category,
+        description: aiData.tagline,
         rich_features: {
-          // 存入详细数据供详情页使用
           pros: aiData.pros,
           cons: aiData.cons,
           best_for: aiData.best_for,
-          alternatives: aiData.alternatives,
+          competitor_name: aiData.competitor_name,
+          comparison_table: aiData.comparison_table,
         },
       };
-
-      process.stdout.write("✨");
     }
-    await delay(1000); // 避免 AI API 速率限制
+
+    // 每处理完一个 Batch 就保存一次 (防止程序中途崩溃白跑)
+    await fs.writeFile(filePath, JSON.stringify(allTools, null, 2));
+    console.log(`💾 Batch ${i + 1} saved.`);
+
+    // 休息一下，避免令牌速率限制 (TPM)
+    await delay(2000);
   }
 
-  // SAVE TO DISK
-  // Ensure directory exists
-  const dir = path.dirname(OUTPUT_FILE);
-  try {
-    await fs.access(dir);
-  } catch {
-    await fs.mkdir(dir, { recursive: true });
-  }
-
-  await fs.writeFile(OUTPUT_FILE, JSON.stringify(allTools, null, 2));
-
-  console.log(`\n\n✅ Mission Complete.`);
-  console.log(
-    `💰 Harvested ${Object.keys(allTools).length} potential money-making pages.`
-  );
-  console.log(`📂 Data saved to: ${OUTPUT_FILE}`);
+  console.log("\n✅ All Done! Your database is now rich and valuable.");
 }
 
 main();
