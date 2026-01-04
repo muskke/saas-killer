@@ -1,0 +1,51 @@
+name: Weekly Data Update
+
+on:
+  schedule:
+    # 每周一早上 00:00 UTC (北京时间 8:00) 运行
+    - cron: '0 0 * * *'
+  # 允许你手动点击按钮触发 (方便测试)
+  workflow_dispatch:
+
+jobs:
+  update-data:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        cache: 'npm'
+
+    - name: Install dependencies
+      run: npm ci
+
+    - name: Run Fetch Script
+      env:
+        # 需要在 GitHub Secrets 里配置这两个变量
+        GITHUB_TOKEN: ${{ secrets.GH_TOKEN }} 
+        OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+        OPENAI_BASE_URL: ${{ secrets.OPENAI_BASE_URL }} # 如果你用了 DeepSeek
+      run: |
+        echo "🕷️ Starting crawler..."
+        node scripts/fetch-github-data.js
+        echo "✅ Data fetch complete."
+
+    - name: Commit and Push changes
+      run: |
+        git config --global user.name 'SaaS Killer Bot'
+        git config --global user.email 'bot@saas-killer.com'
+        
+        # 检查 data/tools.db 是否有变化
+        if [[ -n $(git status --porcelain data/tools.db) ]]; then
+          echo "📦 Database changed. Committing..."
+          git add data/tools.db
+          git commit -m "chore(data): auto-update tools database [skip ci]"
+          git push
+        else
+          echo "💤 No changes detected."
+        fi
