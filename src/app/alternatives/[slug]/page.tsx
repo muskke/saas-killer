@@ -18,7 +18,23 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
   const tool = await getToolBySlug(slug); // 🔥 直接查库
   if (!tool) return { title: 'Tool Not Found' };
-  return { title: `${tool.name} - Open Source Alternative to ${tool.rich_features?.alternatives?.[0] || 'SaaS'}` };
+  
+  // 🔥 攻击性 SEO 标题策略
+  const competitor = tool.rich_features?.competitor_name || 'SaaS';
+  const title = `${tool.name} - Free Open Source Alternative to ${competitor} (2026)`;
+  
+  const description = tool.rich_features?.long_summary?.slice(0, 160) || tool.description;
+
+  return { 
+    title: title,
+    description: description,
+    // OpenGraph: 当链接分享到 Twitter/Discord 时显示的卡片
+    openGraph: {
+      title: title,
+      description: description,
+      images: [tool.logo || '/default-cover.png'], // 最好有个默认封面
+    }
+  };
 }
 
 export default async function Page({ params }: Props) {

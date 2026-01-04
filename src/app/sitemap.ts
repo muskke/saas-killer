@@ -23,8 +23,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // 2. 动态页面 (那几百个工具详情页)
   const dynamicPages: MetadataRoute.Sitemap = tools.map((tool) => ({
     url: `${BASE_URL}/alternatives/${tool.slug}`,
-    lastModified: new Date(), // 理想情况下，这里应该用 tool.updated_at
-    changeFrequency: 'weekly',
+    lastModified: tool.updated_at ? new Date(tool.updated_at) : new Date(),
+    changeFrequency: "weekly" as const,
     priority: 0.8, // 详情页权重次之
   }));
 
