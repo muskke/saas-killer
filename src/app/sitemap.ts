@@ -3,7 +3,8 @@ import { getAllTools } from '@/lib/db';
 
 // 🔥 这里的 URL 必须换成你 Vercel 部署后的真实域名！
 // 如果你还没部署，先填个假的，部署后立马回来改！
-const BASE_URL = 'https://your-project-name.vercel.app';
+const BASE_URL =
+  process.env.NEXT_PUBLIC_BASE_URL || "https://saas-killer.chaos-meme.cn";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const toolsMap = await getAllTools();

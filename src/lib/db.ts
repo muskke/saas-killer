@@ -7,7 +7,7 @@ let db: any;
 
 function getDb() {
   if (db) return db;
-  const dbPath = path.join(process.cwd(), "data", "tools.db");
+  const dbPath = path.join(process.cwd(), process.env.DATABASE_PATH || "data/tools.db");
 
   // 生产环境只读，且如果文件不存在直接报错
   db = new Database(dbPath, { readonly: true, fileMustExist: true });

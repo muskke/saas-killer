@@ -11,7 +11,7 @@ const openai = new OpenAI({
 });
 
 // 初始化数据库
-const dbPath = path.join(__dirname, "../data/tools.db");
+const dbPath = path.join(__dirname, "..", process.env.DATABASE_PATH || "data/tools.db");
 const db = new Database(dbPath);
 
 // 搜索关键词
@@ -58,7 +58,7 @@ const SEARCH_QUERIES = [
 
 // 🔥 核心配置：批处理大小
 // 建议设置为 5-10。太大容易导致 AI 响应超时或 JSON 截断。
-const BATCH_SIZE = 8;
+const BATCH_SIZE = parseInt(process.env.BATCH_SIZE) || 8;
 
 // 辅助函数：将数组切块
 function chunkArray(array, size) {
@@ -104,7 +104,7 @@ async function analyzeBatchWithAI(repos) {
   console.log(`🧠 AI is analyzing a batch of ${repos.length} tools...`);
 
   // 🔥 重试配置
-  const MAX_RETRIES = 5; // 最多重试 5 次
+  const MAX_RETRIES = parseInt(process.env.MAX_RETRIES) || 5; // 最多重试 5 次
   let attempt = 0;
 
   const prompt = `

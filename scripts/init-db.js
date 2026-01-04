@@ -2,7 +2,7 @@ const Database = require("better-sqlite3");
 const path = require("path");
 const fs = require("fs");
 
-const dbPath = path.join(__dirname, "../data/tools.db");
+const dbPath = path.join(__dirname, "..", process.env.DATABASE_PATH || "data/tools.db");
 // 如果目录不存在，创建它
 const dataDir = path.dirname(dbPath);
 if (!fs.existsSync(dataDir)) {
