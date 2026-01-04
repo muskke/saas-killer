@@ -11,6 +11,11 @@ import {
   Star,
   Shield,
   Zap,
+  Check,
+  X,
+  Github,
+  Globe,
+  ArrowRight,
 } from "lucide-react";
 
 type Props = {
@@ -51,6 +56,25 @@ export default async function Page({ params }: Props) {
   const tool = await getToolBySlug(slug); // 🔥 直接查库，省内存
 
   if (!tool) notFound();
+
+  // 1. 获取竞品名称
+  const competitorName = tool.rich_features?.competitor_name || "SaaS";
+
+  // 2. 定义一个简单的估价函数 (你可以根据你的数据量慢慢补充)
+  const getSaaSPrice = (name: string) => {
+    const n = name.toLowerCase();
+    if (n.includes("shopify")) return 29; // Shopify Basic $29/mo
+    if (n.includes("salesforce")) return 25; // CRM usually expensive
+    if (n.includes("slack")) return 8;
+    if (n.includes("notion")) return 10;
+    if (n.includes("airtable")) return 20;
+    if (n.includes("jira")) return 15;
+    return 12; // 默认平均值 (Notion/Trello 标准)
+  };
+
+  const pricePerUser = getSaaSPrice(competitorName);
+  const teamSize = 10; // 设定一个 Teaser 用的默认团队大小
+  const annualLoss = pricePerUser * teamSize * 12; // 计算年亏损
 
   return (
     <main className="min-h-screen bg-[#F9FAFB] pb-20">
@@ -353,98 +377,126 @@ export default async function Page({ params }: Props) {
                 </ul>
               </div>
             </div>
+            {/* “省钱卡片” (Teaser) */}
+            {/* --- 💎 The "Premium" SaaS Tax Teaser --- */}
+            <div className="relative group rounded-3xl bg-black border border-white/10 shadow-2xl overflow-hidden mb-16 isolate">
+              {/* 1. 背景层：科技感网格 + 顶部聚光灯 */}
+              {/* 网格背景 (Grid Pattern) */}
+              <div className="absolute inset-0 bg-[linear-gradient(to_right,#80808012_1px,transparent_1px),linear-gradient(to_bottom,#80808012_1px,transparent_1px)] bg-[size:24px_24px]"></div>
+              {/* 顶部聚光灯 (Spotlight) */}
+              <div className="absolute left-0 top-0 right-0 h-px bg-gradient-to-r from-transparent via-indigo-500/50 to-transparent"></div>
+              <div className="absolute left-1/2 top-0 -translate-x-1/2 w-1/2 h-24 bg-indigo-500/20 blur-[100px]"></div>
 
-            {/* 核心对比表格 (AI Powered) */}
-            <div className="bg-white rounded-3xl border border-gray-100 shadow-sm overflow-hidden mt-12">
-              <div className="bg-gray-900 p-6 text-white flex justify-between items-center">
-                <h3 className="text-xl font-bold flex items-center gap-2">
-                  <Zap className="text-yellow-400" />
-                  <span>The "SaaS Tax" Calculator</span>
-                </h3>
-                <span className="text-xs bg-gray-800 px-3 py-1 rounded-full text-gray-400 uppercase tracking-wider font-bold">
-                  VS {tool.rich_features?.competitor_name || "Proprietary SaaS"}
-                </span>
-              </div>
+              <div className="relative p-8 md:p-10 flex flex-col md:flex-row items-center justify-between gap-10">
+                {/* 左侧：强力文案 */}
+                <div className="text-center md:text-left flex-1 space-y-4">
+                  {/* 警告胶囊 */}
+                  <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-red-500/10 border border-red-500/20 text-red-400 text-xs font-bold uppercase tracking-widest animate-pulse">
+                    <span className="relative flex h-2 w-2">
+                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                      <span className="relative inline-flex rounded-full h-2 w-2 bg-red-500"></span>
+                    </span>
+                    Financial Leak Detected
+                  </div>
 
-              <div className="p-0">
-                <table className="w-full text-left border-collapse table-fixed">
-                  <thead>
-                    <tr className="bg-gray-50 border-b border-gray-100">
-                      <th className="p-6 text-xs font-bold text-gray-400 uppercase w-1/3">
-                        Feature
-                      </th>
-                      <th className="p-6 text-xs font-bold text-indigo-600 uppercase text-center w-1/3">
-                        {tool.name}
-                      </th>
-                      <th className="p-6 text-xs font-bold text-gray-400 uppercase text-center w-1/3">
-                        {tool.rich_features?.competitor_name || "SaaS"}
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-gray-50">
-                    {/* 🔥 动态渲染 AI 生成的 3 行数据 */}
-                    {(tool.rich_features?.comparison_table || []).map(
-                      (row: any, index: number) => (
-                        <tr key={index}>
-                          <td className="p-6 text-sm font-bold text-gray-700 flex items-center gap-2">
-                            {row.feature}
-                            {/* 如果是第一行(价格)，加个小火苗 */}
-                            {index === 0 && (
-                              <span className="text-xs text-orange-500">
-                                🔥
-                              </span>
-                            )}
-                          </td>
+                  {/* 渐变标题 */}
+                  <h3 className="text-3xl md:text-4xl font-black text-transparent bg-clip-text bg-gradient-to-r from-white via-gray-200 to-gray-500 tracking-tight">
+                    Stop the "SaaS Tax"
+                  </h3>
 
-                          {/* 我方 (OS) */}
-                          <td className="p-6 text-center">
-                            <div className="inline-flex items-center gap-1.5 bg-emerald-100 text-emerald-800 px-3 py-1.5 rounded-lg text-sm font-bold border border-emerald-200">
-                              <CheckCircle2 size={14} />
-                              {row.os_value}
-                            </div>
-                          </td>
+                  <p className="text-gray-400 text-lg leading-relaxed max-w-lg">
+                    Your team is burning cash. Switching to{" "}
+                    <span className="text-indigo-400 font-bold">
+                      {tool.name}
+                    </span>{" "}
+                    instantly boosts your runway.
+                  </p>
+                </div>
 
-                          {/* 敌方 (SaaS) */}
-                          <td className="p-6 text-center">
-                            <div
-                              className={`inline-flex items-center gap-1.5 text-sm font-medium ${
-                                index === 0
-                                  ? "text-red-500 font-bold"
-                                  : "text-gray-500"
-                              }`}
-                            >
-                              {/* 只有价格行加删除线，其他行正常显示 */}
-                              <span
-                                className={
-                                  index === 0
-                                    ? "line-through decoration-red-300"
-                                    : ""
-                                }
-                              >
-                                {row.saas_value}
-                              </span>
-                            </div>
-                          </td>
-                        </tr>
-                      )
-                    )}
+                {/* 右侧：全息数据仪表盘 (Holographic Dashboard) */}
+                <div className="relative shrink-0 w-full md:w-auto">
+                  {/* 仪表盘背景卡片 */}
+                  <div className="bg-gray-900/80 backdrop-blur-xl border border-white/10 rounded-2xl p-6 shadow-2xl relative overflow-hidden group/chart cursor-default">
+                    {/* 卡片内的光效 */}
+                    <div className="absolute -top-10 -right-10 w-20 h-20 bg-indigo-500/30 blur-2xl rounded-full group-hover/chart:bg-indigo-400/40 transition-colors"></div>
 
-                    {/* ⚠️ 万一 AI 没生成数据 (Fallback)，显示默认行，防止表格塌陷 */}
-                    {!tool.rich_features?.comparison_table && (
-                      <tr>
-                        <td
-                          className="p-6 text-center text-gray-400 italic"
-                          colSpan={3}
-                        >
-                          AI analysis pending...
-                        </td>
-                      </tr>
-                    )}
-                  </tbody>
-                </table>
+                    <div className="flex items-end gap-8">
+                      {/* Column 1: SaaS Cost (Bad) */}
+                      <div className="flex flex-col items-center gap-3 group/bar">
+                        <div className="text-center">
+                          <div className="text-[10px] text-gray-500 font-bold uppercase tracking-wider mb-1">
+                            Competitor
+                          </div>
+                          {/* Monospace 字体显示金额，更有数字感 */}
+                          <div className="text-red-400 font-mono font-bold text-lg tabular-nums tracking-tight">
+                            -${annualLoss.toLocaleString()}
+                          </div>
+                          {/* 🔥 新增：解释计算来源，增加可信度 */}
+                          <div className="text-[9px] text-gray-600 font-medium mt-1">
+                            (Est. {teamSize} users @ ${pricePerUser}/mo)
+                          </div>
+                        </div>
+
+                        {/* 柱状图 */}
+                        <div className="w-16 h-32 bg-gray-800 rounded-t-lg relative overflow-hidden border-x border-t border-white/5">
+                          {/* 红色填充动画 */}
+                          <div className="absolute bottom-0 left-0 right-0 h-[85%] bg-gradient-to-t from-red-900/80 to-red-500/80 transition-all duration-1000 group-hover/chart:h-[90%]">
+                            {/* 纹理线条 */}
+                            <div className="w-full h-px bg-red-400/30 mt-1"></div>
+                            <div className="absolute top-0 inset-x-0 h-px bg-red-400/50 shadow-[0_0_10px_rgba(248,113,113,0.5)]"></div>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* VS Divider */}
+                      <div className="h-32 flex flex-col justify-center pb-8">
+                        <span className="text-gray-600 font-black italic text-xl opacity-50">
+                          vs
+                        </span>
+                      </div>
+
+                      {/* Column 2: Open Source (Good) */}
+                      <div className="flex flex-col items-center gap-3">
+                        <div className="text-center">
+                          <div className="text-[10px] text-gray-500 font-bold uppercase tracking-wider mb-1">
+                            Self-Hosted
+                          </div>
+                          <div className="text-emerald-400 font-mono font-bold text-lg tabular-nums tracking-tight">
+                            $0
+                          </div>
+                        </div>
+
+                        {/* 柱状图 */}
+                        <div className="w-16 h-32 flex items-end justify-center relative">
+                          {/* 绿色微小柱体 */}
+                          <div className="w-full h-1 bg-emerald-500 shadow-[0_0_20px_rgba(16,185,129,0.8)] rounded-full"></div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* CTA 按钮覆盖层 */}
+                    <div className="mt-6 pt-6 border-t border-white/5">
+                      <Link
+                        href={`/vs/${tool.slug}`}
+                        className="flex items-center justify-between w-full group/btn"
+                      >
+                        <span className="text-sm font-bold text-white group-hover/btn:text-indigo-300 transition-colors">
+                          Launch Calculator
+                        </span>
+                        <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center group-hover/btn:bg-indigo-500 group-hover/btn:scale-110 transition-all">
+                          <ArrowRight size={14} className="text-white" />
+                        </div>
+                      </Link>
+                    </div>
+                  </div>
+
+                  {/* 装饰性数据标签 (悬浮在卡片外) */}
+                  <div className="absolute -right-4 -top-4 bg-yellow-400 text-gray-900 text-[10px] font-black px-2 py-0.5 rounded shadow-lg transform rotate-6 border border-yellow-200">
+                    SAVE 100%
+                  </div>
+                </div>
               </div>
             </div>
-
             {/* 5. 评论区 */}
             <Comments />
           </div>
