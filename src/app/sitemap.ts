@@ -48,5 +48,14 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: 0.7,
   }));
 
-  return [...staticPages, ...categoryPages, ...dynamicPages];
+  // 5. 对比页面 (VS Pages)
+  const vsPages: MetadataRoute.Sitemap = tools.map((tool) => ({
+    // 这里的 URL 就是我们刚做的 /vs/slug
+    url: `${BASE_URL}/vs/${encodeURIComponent(tool.slug)}`,
+    lastModified: new Date(),
+    changeFrequency: "weekly" as const,
+    priority: 0.9, // SEO 权重给高一点，因为这是转化页
+  }));
+
+  return [...staticPages, ...categoryPages, ...dynamicPages, ...vsPages];
 }
