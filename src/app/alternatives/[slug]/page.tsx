@@ -1,5 +1,5 @@
 import { notFound } from 'next/navigation';
-import { getAllTools } from '@/lib/db';
+import { getAllTools, getToolBySlug } from '@/lib/db';
 import type { Metadata } from 'next';
 import AdBanner from '@/components/AdBanner';
 import Comments from '@/components/Comments';
@@ -16,16 +16,14 @@ export async function generateStaticParams() {
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
-  const tools = await getAllTools();
-  const tool = tools.find((t: any) => t.slug === slug);
+  const tool = await getToolBySlug(slug); // 🔥 直接查库
   if (!tool) return { title: 'Tool Not Found' };
   return { title: `${tool.name} - Open Source Alternative to ${tool.rich_features?.alternatives?.[0] || 'SaaS'}` };
 }
 
 export default async function Page({ params }: Props) {
   const { slug } = await params;
-  const tools = await getAllTools();
-  const tool = tools.find((t: any) => t.slug === slug);
+  const tool = await getToolBySlug(slug); // 🔥 直接查库，省内存
 
   if (!tool) notFound();
 

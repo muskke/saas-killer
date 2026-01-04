@@ -57,6 +57,21 @@ export default function ToolGrid({ tools, categories }: { tools: Tool[], categor
     setDisplayCount(prev => prev + 24);
   };
 
+  // 简单的哈希函数，根据分类名生成一致的颜色
+  const getCategoryColor = (cat: string) => {
+    const colors = [
+      'bg-blue-50 text-blue-700 border-blue-100', // Developer
+      'bg-purple-50 text-purple-700 border-purple-100', // Creative
+      'bg-emerald-50 text-emerald-700 border-emerald-100', // Business
+      'bg-orange-50 text-orange-700 border-orange-100', // Other
+    ];
+    // 简单的分配逻辑
+    if (['BaaS', 'DevOps', 'Monitoring', 'Security', 'Database', 'AI/ML'].includes(cat)) return colors[0];
+    if (['Design', 'Media', 'Docs', 'Note-taking'].includes(cat)) return colors[1];
+    if (['CRM', 'ERP', 'Finance', 'Marketing', 'E-commerce'].includes(cat)) return colors[2];
+    return colors[3];
+  };
+
   return (
     <div className="max-w-7xl mx-auto px-4 py-12">
       
@@ -168,7 +183,7 @@ export default function ToolGrid({ tools, categories }: { tools: Tool[], categor
 
               {/* 底部信息 */}
               <div className="flex items-center justify-between pt-4 border-t border-gray-50">
-                <span className="text-xs font-bold text-gray-400 uppercase tracking-wider bg-gray-50 px-2 py-1 rounded">
+                <span className={`text-xs font-bold uppercase tracking-wider px-2 py-1 rounded border ${getCategoryColor(tool.category)}`}>
                   {tool.category || 'Tool'}
                 </span>
                 <span className="text-indigo-600 opacity-0 group-hover:opacity-100 transition-opacity transform translate-x-2 group-hover:translate-x-0 flex items-center gap-1 text-sm font-bold">

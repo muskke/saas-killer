@@ -1,24 +1,59 @@
 require("dotenv").config();
 const axios = require("axios");
-const fs = require("fs").promises;
 const path = require("path");
 const OpenAI = require("openai");
+const Database = require("better-sqlite3");
 
-// 初始化 AI (这里以 Gemini 为例，兼容 OpenAI 格式)
+// 初始化 AI (兼容 OpenAI 格式)
 const openai = new OpenAI({
-  baseURL: "https://cliproxyapi-hv47.onrender.com/v1", // 如果用 OpenAI 就删掉这行
+  baseURL: process.env.OPENAI_BASE_URL, 
   apiKey: process.env.OPENAI_API_KEY,
 });
 
-// 搜索关键词 (保持你的撒网策略)
+// 初始化数据库
+const dbPath = path.join(__dirname, "../data/tools.db");
+const db = new Database(dbPath);
+
+// 搜索关键词
 const SEARCH_QUERIES = [
+  // 1. 通用大词 (Generic High-Volume)
   "topic:open-source-alternative",
   "topic:self-hosted",
-  "privacy-focused alternative",
+  "topic:privacy-focused",
+  "topic:opensource",
+  "topic:free-software",
+
+  // 2. SaaS 巨头精准狙击 (High Value Targets)
+  // 办公/生产力
   "notion alternative",
-  "shopify alternative",
   "airtable alternative",
   "slack alternative",
+  "trello alternative",
+  "zoom alternative",
+  "docusign alternative", // 电子签章，很贵
+
+  // 开发者服务 (BaaS/Infra - 这是最赚钱的领域)
+  "firebase alternative", // 比如 Supabase
+  "vercel alternative", // 比如 Coolify
+  "heroku alternative",
+  "auth0 alternative", // 比如 Clerk/Logto
+  "datadog alternative", // 比如 SigNoz
+  "sentry alternative",
+
+  // 设计与媒体
+  "figma alternative", // 比如 Penpot
+  "adobe alternative", // 比如 Photopea
+  "canva alternative",
+
+  // 营销与电商
+  "shopify alternative",
+  "mailchimp alternative", // 比如 Listmonk
+  "intercom alternative", // 客服系统
+  "google-analytics alternative", // 比如 Plausible
+
+  // 3. 极客关键词 (Hidden Gems)
+  "topic:build-your-own-x", // 很多硬核项目在这里
+  "topic:low-code",
 ];
 
 // 🔥 核心配置：批处理大小
@@ -37,6 +72,7 @@ function chunkArray(array, size) {
 // 模拟延迟 (避免并发过高炸掉接口)
 const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
+// 1. 抓取 GitHub 数据
 async function fetchRepoData(query) {
   console.log(`\n🔍 Hunting for data: "${query}"...`);
   try {
@@ -47,11 +83,9 @@ async function fetchRepoData(query) {
           Authorization: `token ${process.env.GITHUB_TOKEN}`,
           Accept: "application/vnd.github.v3+json",
         },
-        params: { q: query, sort: "stars", order: "desc", per_page: 50 }, // 抓多点，反正我们会批量处理
+        params: { q: query, sort: "stars", order: "desc", per_page: 50 },
       }
     );
-
-    // 🔥 加这一行日志：看看 GitHub 到底给了多少个？
     console.log(`   > GitHub returned ${response.data.items.length} items.`);
     return response.data.items;
   } catch (error) {
@@ -60,17 +94,19 @@ async function fetchRepoData(query) {
   }
 }
 
-// 🔥 核心升级：批量 AI 分析函数
+// 2. AI 批量分析 (保持之前的 Prompt 逻辑不变，为了节省篇幅，这里用简化版 Prompt，请确保你用的是包含 long_summary 的完整版)
 async function analyzeBatchWithAI(repos) {
   const toolsList = repos
     .map(
       (r) => `- Name: "${r.name}", Desc: "${r.description || "No description"}"`
     )
     .join("\n");
-
   console.log(`🧠 AI is analyzing a batch of ${repos.length} tools...`);
 
-  // 这里的 Prompt 极其关键，要求 AI 返回以 repo.name 为 Key 的大 JSON
+  // 🔥 重试配置
+  const MAX_RETRIES = 5; // 最多重试 5 次
+  let attempt = 0;
+
   const prompt = `
     Analyze the following list of Open Source tools:
     ${toolsList}
@@ -78,7 +114,38 @@ async function analyzeBatchWithAI(repos) {
     Task: Return a STRICT JSON object where the KEY is the tool name (lowercase) and the VALUE is the analysis object.
     
     For EACH tool, the analysis object must contain:
-    1. "category": Choose ONE from [CMS, CRM, Analytics, DevTools, E-commerce, Productivity, Design, Finance, Communication, Database, Media].
+    1. "category": Choose ONE from the following list. Pick the MOST specific one:
+       
+       [Business]
+       - CRM (Customer Relationship)
+       - ERP (Enterprise Resource Planning)
+       - HRM (Human Resources)
+       - Finance (Accounting, Invoicing)
+       - Marketing (Email, SEO, Analytics)
+       - E-commerce (Stores, Inventory)
+       - Support (Helpdesk, Chatbots)
+
+       [Developer]
+       - BaaS (Backend as a Service: Auth, Database, Storage)
+       - DevOps (CI/CD, Docker, K8s)
+       - Monitoring (Observability, Logs, Uptime)
+       - Security (Password Managers, VPN, Identity)
+       - CMS (Headless, Static, Blogs)
+       - Database (SQL, NoSQL, Vector)
+       - AI/ML (LLMs, Training, Vector DBs)
+
+       [Creative & Office]
+       - Design (UI/UX, Graphics, 3D)
+       - Media (Photo, Video, Streaming)
+       - Docs (Wiki, Knowledge Base, Office Suite)
+       - Note-taking (Personal Knowledge Management)
+       - Project Management (Kanban, Agile)
+       - Communication (Chat, Video, Team)
+       
+       [Other]
+       - Form Builder (Surveys)
+       - Automation (Workflow, IPA)
+       - Browser (Extensions, Privacy)
     2. "tagline": A catchy, marketing-style one-liner (max 10 words).
     3. "long_summary": A persuasive, 2-sentence description explaining WHAT the tool does and WHY it is special. (e.g. "Immich is a self-hosted photo backup solution that directly replaces Google Photos. It offers facial recognition, timeline view, and mobile backup without the monthly fees.")
     4. "use_cases": An array of 3 specific scenarios where this tool shines (e.g. ["Wedding Photography Backup", "Family Server", "Private Portfolio"]).
@@ -88,33 +155,60 @@ async function analyzeBatchWithAI(repos) {
     8. "pros": Array of 3 strings.
     9. "cons": Array of 3 strings.
 
-    Output strictly JSON.
+    Output strictly JSON. No markdown.
   `;
 
-  try {
-    const completion = await openai.chat.completions.create({
-      messages: [{ role: "user", content: prompt }],
-      model: "gemini-3-pro-preview", // 或 gpt-4o-mini
-      temperature: 0.1, //以此降低幻觉
-    });
+  // 🔥 循环重试逻辑
+  while (attempt < MAX_RETRIES) {
+    try {
+      if (attempt > 0)
+        console.log(
+          `🔄 Retrying batch (Attempt ${attempt + 1}/${MAX_RETRIES})...`
+        );
 
-    // 🧹 清洗数据
-    let rawContent = completion.choices[0].message.content;
+      const completion = await openai.chat.completions.create({
+        messages: [{ role: "user", content: prompt }],
+        model: process.env.OPENAI_MODEL_ID, 
+        temperature: 0.1, //以此降低幻觉
+      });
 
-    // 1. 暴力撕掉 Markdown 的皮 (```json 和 ```)
-    let cleanContent = rawContent
-      .replace(/```json/g, "")
-      .replace(/```/g, "")
-      .trim();
+      // 🧹 清洗数据
+      let rawContent = completion.choices[0].message.content;
 
-    // 2. 解析清洗后的内容
-    const aiData = JSON.parse(cleanContent);
-    // --- 🧹 CLEANING PROTOCOL END ---
+      // 1. 暴力撕掉 Markdown 的皮 (```json 和 ```)
+      let cleanContent = rawContent
+        .replace(/```json/g, "")
+        .replace(/```/g, "")
+        .trim();
 
-    return aiData;
-  } catch (error) {
-    console.error(`❌ AI Batch Error:`, error.message);
-    return {}; // 失败返回空对象，主程序会走 Fallback
+      // 2. 解析清洗后的内容
+      return JSON.parse(cleanContent);
+    } catch (error) {
+      attempt++;
+      console.error(
+        `❌ AI Batch Error (Attempt ${attempt}/${MAX_RETRIES}):`,
+        error.message
+      );
+
+      // 如果是特定的认证错误，重试可能没用，建议检查配置
+      if (error.message.includes("auth_unavailable") || error.status === 401) {
+        console.warn(
+          "⚠️  Warning: This looks like an API Key issue. Check your .env file!"
+        );
+      }
+
+      if (attempt >= MAX_RETRIES) {
+        console.error(
+          "💀 Max retries reached. Using fallback data for this batch."
+        );
+        return {}; // 彻底失败，只能返回空对象走 fallback
+      }
+
+      // 指数退避：第一次等 5秒，第二次等 10秒，第三次等 20秒, ...
+      const waitTime = 5000 * Math.pow(2, attempt - 1);
+      console.log(`⏳ Cooling down for ${waitTime / 1000}s...`);
+      await delay(waitTime);
+    }
   }
 }
 
@@ -123,7 +217,9 @@ function getFallbackData(item) {
   return {
     category: "DevTools",
     tagline: item.description || "Open Source Alternative",
-    competitor_name: "Proprietary SaaS",
+    long_summary: item.description,
+    use_cases: ["Self-hosting"],
+    competitor_name: "SaaS",
     comparison_table: [
       { feature: "Pricing", os_value: "Free", saas_value: "Paid" },
       { feature: "Source Code", os_value: "Open", saas_value: "Closed" },
@@ -136,18 +232,16 @@ function getFallbackData(item) {
 }
 
 async function main() {
-  const filePath = path.join(__dirname, "../data/alternatives.json");
-  let allTools = {};
+  // 1. 准备 SQL 语句
+  const insertStmt = db.prepare(`
+    INSERT OR REPLACE INTO tools (
+      slug, name, description, category, stars, logo, url, license, language, updated_at, forks, issues, rich_features_json
+    ) VALUES (
+      @slug, @name, @description, @category, @stars, @logo, @url, @license, @language, @updated_at, @forks, @issues, @rich_features_json
+    )
+  `);
 
-  // 读取现有数据 (避免重复抓取)
-  try {
-    const data = await fs.readFile(filePath, "utf8");
-    allTools = JSON.parse(data);
-  } catch (err) {
-    console.log("ℹ️ No existing data found, starting fresh.");
-  }
-
-  // 1. 收集所有要去重的工具
+  // 2. 收集 GitHub 数据
   let rawItems = [];
   for (const query of SEARCH_QUERIES) {
     const items = await fetchRepoData(query);
@@ -155,20 +249,24 @@ async function main() {
     await delay(1000);
   }
 
-  // 去重逻辑：只保留未入库的 或者 强制更新的
+  // 3. 去重与检查 (Check Database directly!)
   const uniqueItems = [];
   const seen = new Set();
+
+  // 预编译查询语句，速度更快
+  const checkStmt = db.prepare(
+    "SELECT rich_features_json FROM tools WHERE slug = ?"
+  );
 
   for (const item of rawItems) {
     const slug = item.name.toLowerCase();
 
-    // 🔴 罪魁祸首是这一行！
-    // 它在检查 comparison_table，而你现在的 JSON 里已经有这个字段了，所以它就跳过了
-    // if (allTools[slug] && allTools[slug].rich_features?.comparison_table) continue;
-
-    // 🟢 把上面那行删掉，换成下面这一行：
-    // 逻辑变成：只有当 "long_summary" (新字段) 存在时，才算真正完成，否则重跑！
-    if (allTools[slug] && allTools[slug].rich_features?.long_summary) continue;
+    // 🔥 查库：如果数据库里已经有这个工具，并且有 long_summary，就跳过
+    const row = checkStmt.get(slug);
+    if (row) {
+      const rich = JSON.parse(row.rich_features_json || "{}");
+      if (rich.long_summary) continue; // 已经完美了，跳过
+    }
 
     if (!seen.has(slug)) {
       seen.add(slug);
@@ -176,52 +274,27 @@ async function main() {
     }
   }
 
-  console.log(`\n📦 Total unique tools to analyze: ${uniqueItems.length}`);
+  console.log(
+    `\n📦 Total unique tools to analyze & insert: ${uniqueItems.length}`
+  );
 
-  // 2. 切片批处理 (Batch Processing)
+  // 4. 批处理 AI + 入库
   const batches = chunkArray(uniqueItems, BATCH_SIZE);
 
   for (let i = 0; i < batches.length; i++) {
     const batch = batches[i];
-    console.log(
-      `\n🚀 Processing Batch ${i + 1}/${batches.length} (${
-        batch.length
-      } tools)...`
-    );
+    console.log(`\n🚀 Processing Batch ${i + 1}/${batches.length}...`);
 
-    // 调用 AI 批量分析
     const aiResults = await analyzeBatchWithAI(batch);
 
-    // 3. 将结果合并回主数据
-    for (const item of batch) {
-      const slug = item.name.toLowerCase();
-      // 尝试从 AI 结果里拿数据，拿不到就用 Fallback
-      const aiData = aiResults[slug] || getFallbackData(item);
+    // 开启事务写入 (Transaction)
+    const transaction = db.transaction((items) => {
+      for (const item of items) {
+        const slug = item.name.toLowerCase();
+        const aiData = aiResults[slug] || getFallbackData(item);
 
-      if (!aiResults[slug]) {
-        console.warn(`⚠️ AI missed tool: ${item.name}, using fallback.`);
-      }
-
-      allTools[slug] = {
-        slug: slug,
-        name: item.name,
-        full_name: item.full_name,
-        logo: item.owner.avatar_url,
-        url: item.homepage || item.html_url,
-        stars: item.stargazers_count,
-        license: item.license ? item.license.spdx_id : "Unknown",
-
-        // 🔥 新增：硬核技术指标
-        language: item.language || "Unknown", // 主要编程语言
-        forks: item.forks_count, // 衍生数量
-        issues: item.open_issues_count, // Bug 数量
-        created_at: item.created_at, // 创建时间
-        updated_at: item.updated_at, // 最后更新时间 (判断项目死活的关键)
-
-        // 存入 AI 数据
-        category: aiData.category,
-        description: aiData.tagline,
-        rich_features: {
+        // 构建完整数据对象
+        const richFeatures = {
           pros: aiData.pros,
           cons: aiData.cons,
           best_for: aiData.best_for,
@@ -229,19 +302,36 @@ async function main() {
           comparison_table: aiData.comparison_table,
           long_summary: aiData.long_summary,
           use_cases: aiData.use_cases,
-        },
-      };
-    }
+        };
 
-    // 每处理完一个 Batch 就保存一次 (防止程序中途崩溃白跑)
-    await fs.writeFile(filePath, JSON.stringify(allTools, null, 2));
-    console.log(`💾 Batch ${i + 1} saved.`);
+        // 执行插入
+        insertStmt.run({
+          slug: slug,
+          name: item.name,
+          description: aiData.tagline, // 用 tagline 覆盖默认描述
+          category: aiData.category,
+          stars: item.stargazers_count,
+          logo: item.owner.avatar_url,
+          url: item.homepage || item.html_url,
+          license: item.license ? item.license.spdx_id : "Unknown",
+          language: item.language,
+          updated_at: item.updated_at,
+          forks: item.forks_count,
+          issues: item.open_issues_count,
+          rich_features_json: JSON.stringify(richFeatures),
+        });
+      }
+    });
 
-    // 休息一下，避免令牌速率限制 (TPM)
+    // 提交事务
+    transaction(batch);
+    console.log(`💾 Batch ${i + 1} committed to SQLite.`);
+
     await delay(2000);
   }
 
-  console.log("\n✅ All Done! Your database is now rich and valuable.");
+  console.log("\n✅ All Done! Database updated.");
+  db.close();
 }
 
 main();
