@@ -1,79 +1,115 @@
-'use client'; // 👈 关键！声明这是客户端组件，可以交互
+'use client';
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import Link from 'next/link';
-import Image from 'next/image';
+import { Search, Star, ArrowRight } from 'lucide-react';
 import AdBanner from './AdBanner';
 
-// 定义数据类型 (保持和 db.ts 一致)
 type Tool = {
   slug: string;
   name: string;
-  full_name?: string;
-  logo?: string;
+  description: string;
   category: string;
   stars: number;
-  description: string;
+  logo?: string;
+  license?: string;
+  rich_features?: {
+    competitor_name?: string;
+    best_for?: string;
+  };
 };
 
 export default function ToolGrid({ tools, categories }: { tools: Tool[], categories: string[] }) {
   const [search, setSearch] = useState('');
   const [activeCategory, setActiveCategory] = useState('All');
 
-  // 🔥 核心逻辑：实时过滤 (Real-time Filtering)
-  const filteredTools = tools.filter((tool) => {
-    const matchesSearch = tool.name.toLowerCase().includes(search.toLowerCase()) || 
-                          tool.description.toLowerCase().includes(search.toLowerCase());
-    const matchesCategory = activeCategory === 'All' || tool.category === activeCategory;
-    
-    return matchesSearch && matchesCategory;
-  });
+  // 🔥 新增：分页状态，默认只显示 24 个
+  const [displayCount, setDisplayCount] = useState(24);
+
+  // 🔥 核心修复：使用 useMemo 缓存过滤逻辑，并增加空值防御
+  const filteredTools = useMemo(() => {
+    return tools.filter((tool) => {
+      // 1. 防御：如果数据缺胳膊少腿，直接跳过，防止 .toLowerCase() 报错
+      if (!tool || !tool.name) return false;
+
+      // 2. 安全获取字段 (如果不小心是 null，就变成空字符串)
+      const toolName = (tool.name || '').toLowerCase();
+      const toolDesc = (tool.description || '').toLowerCase();
+      const toolCat = (tool.category || 'Uncategorized'); // 保持原大小写用于显示
+      const searchLower = search.toLowerCase();
+
+      // 3. 搜索匹配逻辑
+      const matchesSearch = toolName.includes(searchLower) || 
+                            toolDesc.includes(searchLower);
+      
+      // 4. 分类匹配逻辑
+      const matchesCategory = activeCategory === 'All' || toolCat === activeCategory;
+
+      return matchesSearch && matchesCategory;
+    });
+  }, [tools, search, activeCategory]);
+
+  // 🔥 核心：截取当前要显示的数据
+  const visibleTools = filteredTools.slice(0, displayCount);
+
+  // 处理“加载更多”
+  const handleLoadMore = () => {
+    setDisplayCount(prev => prev + 24);
+  };
 
   return (
-    <section id="tools" className="max-w-7xl mx-auto px-4 py-12">
+    <div className="max-w-7xl mx-auto px-4 py-12">
       
-      {/* --- C: 交互区 (搜索 + 筛选) --- */}
-      <div className="flex flex-col md:flex-row justify-between items-center mb-10 gap-4">
+      {/* 搜索与筛选栏 */}
+      <div className="flex flex-col md:flex-row gap-6 mb-12 items-center justify-between">
         
-        {/* Category Pills */}
-        <div className="flex overflow-x-auto pb-2 no-scrollbar space-x-2 w-full md:w-auto">
-          <button 
+        {/* 分类标签 (横向滚动) */}
+        <div className="flex gap-2 overflow-x-auto pb-2 w-full md:w-auto no-scrollbar mask-gradient">
+          <button
             onClick={() => setActiveCategory('All')}
-            className={`px-4 py-2 rounded-full text-sm font-bold transition-all whitespace-nowrap ${activeCategory === 'All' ? 'bg-indigo-600 text-white shadow-lg' : 'bg-white text-gray-600 border border-gray-200 hover:border-indigo-400'}`}
+            className={`px-4 py-2 rounded-full text-sm font-bold whitespace-nowrap transition-all ${
+              activeCategory === 'All' 
+                ? 'bg-indigo-600 text-white shadow-md' 
+                : 'bg-white text-gray-600 border border-gray-200 hover:bg-gray-50'
+            }`}
           >
-            All
+            All Tools
           </button>
-          {categories.map(cat => (
-            <button 
+          {categories.map((cat) => (
+            <button
               key={cat}
               onClick={() => setActiveCategory(cat)}
-              className={`px-4 py-2 rounded-full text-sm font-bold transition-all whitespace-nowrap ${activeCategory === cat ? 'bg-indigo-600 text-white shadow-lg' : 'bg-white text-gray-600 border border-gray-200 hover:border-indigo-400'}`}
+              className={`px-4 py-2 rounded-full text-sm font-bold whitespace-nowrap transition-all ${
+                activeCategory === cat 
+                  ? 'bg-indigo-600 text-white shadow-md' 
+                  : 'bg-white text-gray-600 border border-gray-200 hover:bg-gray-50'
+              }`}
             >
               {cat}
             </button>
           ))}
         </div>
 
-        {/* Real Search Input */}
-        <div className="relative w-full md:w-64">
-          <input 
-            type="text" 
-            placeholder="Search tools..." 
+        {/* 搜索框 */}
+        <div className="relative w-full md:w-80 shrink-0">
+          <input
+            type="text"
+            placeholder="Search alternatives (e.g. Notion)..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full pl-10 pr-4 py-2 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-shadow"
+            className="w-full pl-11 pr-4 py-3 rounded-xl border border-gray-200 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition-all outline-none bg-white/50 backdrop-blur-sm"
           />
-          <svg className="w-5 h-5 text-gray-400 absolute left-3 top-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+          <Search className="absolute left-4 top-3.5 text-gray-400" size={18} />
         </div>
       </div>
 
           <AdBanner category={activeCategory} />
-          
-      {/* --- A: 视觉升级网格 (Logos + Cards) --- */}
+
+      {/* 工具列表网格 */}
       {filteredTools.length > 0 ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                   
-                  {/* 🔥 $$$ 强力插入：赞助商广告位 (The Money Maker) $$$ */}
+          {/* 🔥 $$$ 强力插入：赞助商广告位 (The Money Maker) $$$ */}
           <div className="group flex flex-col bg-gradient-to-br from-indigo-900 to-blue-800 rounded-xl p-6 shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1 border border-indigo-700 relative overflow-hidden">
             {/* 标签 */}
             <div className="absolute top-0 right-0 bg-yellow-400 text-yellow-900 text-xs font-bold px-3 py-1 rounded-bl-lg z-10">
@@ -101,49 +137,75 @@ export default function ToolGrid({ tools, categories }: { tools: Tool[], categor
             {/* 装饰背景 */}
             <div className="absolute -bottom-4 -right-4 w-24 h-24 bg-white opacity-10 rounded-full blur-xl"></div>
           </div>
-          {filteredTools.map((tool) => (
-            <Link href={`/alternatives/${tool.slug}`} key={tool.slug} className="group flex flex-col bg-white rounded-xl p-6 shadow-sm hover:shadow-xl transition-all duration-300 border border-gray-100 hover:border-indigo-100 transform hover:-translate-y-1">
-              
-              <div className="flex items-start justify-between mb-4">
-                <div className="flex items-center gap-3">
-                  {/* 🔥 Logo Display: 如果有图显示图，没图显示首字母 */}
-                  <div className="w-12 h-12 rounded-xl bg-gray-50 border border-gray-100 flex items-center justify-center overflow-hidden shrink-0">
-                    {tool.logo ? (
-                      <img src={tool.logo} alt={tool.name} className="w-full h-full object-cover" />
-                    ) : (
-                      <span className="text-xl font-bold text-indigo-500">{tool.name.charAt(0)}</span>
-                    )}
-                  </div>
-                  <div>
-                    <h3 className="font-bold text-gray-900 text-lg leading-tight group-hover:text-indigo-600 transition-colors">
-                      {tool.name}
-                    </h3>
-                    <p className="text-xs text-gray-400 font-mono">{tool.full_name || tool.name}</p>
-                  </div>
+          {visibleTools.map((tool) => (
+            <Link 
+              key={tool.slug} 
+              href={`/alternatives/${tool.slug}`}
+              className="group bg-white rounded-2xl border border-gray-100 p-6 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 relative overflow-hidden"
+            >
+              {/* 顶部标签 */}
+              <div className="flex justify-between items-start mb-4">
+                <div className="w-12 h-12 rounded-xl bg-gray-50 border border-gray-100 flex items-center justify-center p-2 group-hover:scale-110 transition-transform">
+                  {tool.logo ? (
+                    <img src={tool.logo} alt={tool.name} className="w-full h-full object-contain" />
+                  ) : (
+                    <span className="text-xl font-bold text-indigo-500">{tool.name.charAt(0)}</span>
+                  )}
                 </div>
-                <div className="flex items-center text-amber-500 font-bold text-xs bg-amber-50 px-2 py-1 rounded-md">
-                  ★ {(tool.stars / 1000).toFixed(1)}k
+                <div className="flex items-center gap-1 bg-amber-50 text-amber-600 px-2 py-1 rounded-lg text-xs font-bold">
+                  <Star size={12} fill="currentColor" />
+                  <span>{(tool.stars / 1000).toFixed(1)}k</span>
                 </div>
               </div>
-              
-              <p className="text-gray-500 text-sm leading-relaxed line-clamp-2 mb-4">
-                {tool.description}
+
+              {/* 内容 */}
+              <h3 className="font-bold text-lg text-gray-900 mb-1 group-hover:text-indigo-600 transition-colors">
+                {tool.name}
+              </h3>
+              <p className="text-sm text-gray-500 mb-4 line-clamp-2 h-10">
+                {tool.description || `Open source alternative to ${tool.rich_features?.competitor_name || 'proprietary software'}.`}
               </p>
-              
-              <div className="mt-auto pt-4 border-t border-gray-50 flex justify-between items-center">
-                 <span className="text-xs font-semibold text-indigo-600 bg-indigo-50 px-2.5 py-1 rounded-md">
-                  {tool.category}
+
+              {/* 底部信息 */}
+              <div className="flex items-center justify-between pt-4 border-t border-gray-50">
+                <span className="text-xs font-bold text-gray-400 uppercase tracking-wider bg-gray-50 px-2 py-1 rounded">
+                  {tool.category || 'Tool'}
+                </span>
+                <span className="text-indigo-600 opacity-0 group-hover:opacity-100 transition-opacity transform translate-x-2 group-hover:translate-x-0 flex items-center gap-1 text-sm font-bold">
+                  View Analysis <ArrowRight size={14} />
                 </span>
               </div>
             </Link>
           ))}
+
+          {/* 🔥 新增：加载更多按钮 */}
+          {visibleTools.length < filteredTools.length && (
+            <div className="mt-12 text-center">
+              <button 
+                onClick={handleLoadMore}
+                className="bg-white border border-gray-200 text-gray-900 font-bold py-3 px-8 rounded-full shadow-sm hover:bg-gray-50 hover:shadow-md transition-all active:scale-95"
+              >
+                Load More Tools ({filteredTools.length - visibleTools.length} remaining)
+              </button>
+            </div>
+          )}
         </div>
       ) : (
-        <div className="text-center py-20 text-gray-400">
-          <p className="text-xl">No tools found matching "{search}"</p>
-          <button onClick={() => {setSearch(''); setActiveCategory('All')}} className="mt-4 text-indigo-600 hover:underline">Clear filters</button>
+        /* 空状态 Empty State */
+        <div className="text-center py-20">
+          <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-gray-100 mb-4 text-3xl">
+            🤔
+          </div>
+          <h3 className="text-xl font-bold text-gray-900">No tools found</h3>
+          <p className="text-gray-500 mt-2">Try searching for "Notion" or "Shopify"</p>
+          <button 
+            onClick={() => {setSearch(''); setActiveCategory('All');}}
+            className="mt-6 text-indigo-600 font-bold hover:underline"
+          >
+            Clear Filters
+          </button>
         </div>
       )}
-    </section>
+    </div>
   );
 }

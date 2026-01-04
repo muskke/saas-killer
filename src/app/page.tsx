@@ -3,10 +3,29 @@ import ToolGrid from '@/components/ToolGrid';
 import Newsletter from '@/components/Newsletter';
 
 export default async function Home() {
-  // 1. Server Side Fetching (SEO 友好)
-  const tools = await getAllTools(); 
-  const categories = Array.from(new Set(tools.map((t: any) => t.category))).filter(Boolean);
+  const allTools = await getAllTools(); // 这里拿到的是包含所有巨量信息的完整数据
+  
+  /// 🔥 核心优化：在传给 Client Component 之前，手动创建一个“瘦身版”数组
+  // 我们只提取 ToolGrid 真正需要的字段
+  const slimTools = allTools.map((tool: any) => ({
+    slug: tool.slug,
+    name: tool.name,
+    // 简介只取前 100 个字符，防止太长
+    description: tool.description?.slice(0, 100) + '...', 
+    category: tool.category,
+    stars: tool.stars,
+    logo: tool.logo,
+    // 如果 ToolGrid 还需要竞品名，就只留这一个，其他的 pros/cons/table 全扔掉
+    rich_features: {
+      competitor_name: tool.rich_features?.competitor_name
+    }
+  }));
 
+  // 对瘦身后的数据排序
+  const sortedTools = slimTools.sort((a, b) => b.stars - a.stars);
+  
+  const categories = Array.from(new Set(allTools.map((t: any) => t.category))).filter(Boolean);
+  
   return (
     <main className="min-h-screen bg-gray-50 font-sans text-gray-900">
       
@@ -26,7 +45,8 @@ export default async function Home() {
 
       {/* 2. Client Side Interaction (交互引擎) */}
       {/* 我们把数据传给 ToolGrid，让它在浏览器里处理搜索 */}
-      <ToolGrid tools={tools} categories={categories} />
+      {/* 🚀 传给组件的是 slimTools，体积只有原来的 1/10 */}
+      <ToolGrid tools={sortedTools} categories={categories} />
       <Newsletter />
 
       {/* Footer */}

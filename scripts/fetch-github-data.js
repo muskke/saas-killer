@@ -50,6 +50,9 @@ async function fetchRepoData(query) {
         params: { q: query, sort: "stars", order: "desc", per_page: 50 }, // 抓多点，反正我们会批量处理
       }
     );
+
+    // 🔥 加这一行日志：看看 GitHub 到底给了多少个？
+    console.log(`   > GitHub returned ${response.data.items.length} items.`);
     return response.data.items;
   } catch (error) {
     console.error(`❌ GitHub API Error: ${error.message}`);
@@ -77,29 +80,21 @@ async function analyzeBatchWithAI(repos) {
     For EACH tool, the analysis object must contain:
     1. "category": Choose ONE from [CMS, CRM, Analytics, DevTools, E-commerce, Productivity, Design, Finance, Communication, Database, Media].
     2. "tagline": A catchy, marketing-style one-liner (max 10 words).
-    3. "competitor_name": The SINGLE most famous SaaS tool this replaces (e.g. "Notion", "Shopify").
-    4. "comparison_table": An array of EXACTLY 3 objects comparing the Open Source tool (OS) vs the SaaS Competitor.
-       - Row 1: "Pricing" (e.g. OS: "Free", SaaS: "$20/mo")
-       - Row 2: "Killer Feature" (e.g. "Storage Limit")
-       - Row 3: "Data Privacy" (e.g. OS: "Self-hosted", SaaS: "Data Mining")
-       Format: { "feature": "String", "os_value": "String", "saas_value": "String" }
-    5. "best_for": Who is the ideal user?
-    6. "pros": Array of 3 strings.
-    7. "cons": Array of 3 strings.
+    3. "long_summary": A persuasive, 2-sentence description explaining WHAT the tool does and WHY it is special. (e.g. "Immich is a self-hosted photo backup solution that directly replaces Google Photos. It offers facial recognition, timeline view, and mobile backup without the monthly fees.")
+    4. "use_cases": An array of 3 specific scenarios where this tool shines (e.g. ["Wedding Photography Backup", "Family Server", "Private Portfolio"]).
+    5. "competitor_name": The SINGLE most famous SaaS tool this replaces.
+    6. "comparison_table": An array of EXACTLY 3 objects comparing OS vs SaaS (Pricing, Killer Feature, Privacy). Format: { "feature": "String", "os_value": "String", "saas_value": "String" }.
+    7. "best_for": Who is the ideal user?
+    8. "pros": Array of 3 strings.
+    9. "cons": Array of 3 strings.
 
-    Output format example:
-    {
-      "appflowy": { "category": "Productivity", ... },
-      "n8n": { "category": "DevTools", ... }
-    }
-    
-    IMPORTANT: Return ONLY valid JSON. No Markdown.
+    Output strictly JSON.
   `;
 
   try {
     const completion = await openai.chat.completions.create({
       messages: [{ role: "user", content: prompt }],
-      model: "gemini-2.5-flash-lite", // 或 gpt-4o-mini
+      model: "gemini-3-pro-preview", // 或 gpt-4o-mini
       temperature: 0.1, //以此降低幻觉
     });
 
@@ -166,9 +161,14 @@ async function main() {
 
   for (const item of rawItems) {
     const slug = item.name.toLowerCase();
-    // 如果已经存在且有详细数据(comparison_table)，就跳过
-    if (allTools[slug] && allTools[slug].rich_features?.comparison_table)
-      continue;
+
+    // 🔴 罪魁祸首是这一行！
+    // 它在检查 comparison_table，而你现在的 JSON 里已经有这个字段了，所以它就跳过了
+    // if (allTools[slug] && allTools[slug].rich_features?.comparison_table) continue;
+
+    // 🟢 把上面那行删掉，换成下面这一行：
+    // 逻辑变成：只有当 "long_summary" (新字段) 存在时，才算真正完成，否则重跑！
+    if (allTools[slug] && allTools[slug].rich_features?.long_summary) continue;
 
     if (!seen.has(slug)) {
       seen.add(slug);
@@ -211,6 +211,13 @@ async function main() {
         stars: item.stargazers_count,
         license: item.license ? item.license.spdx_id : "Unknown",
 
+        // 🔥 新增：硬核技术指标
+        language: item.language || "Unknown", // 主要编程语言
+        forks: item.forks_count, // 衍生数量
+        issues: item.open_issues_count, // Bug 数量
+        created_at: item.created_at, // 创建时间
+        updated_at: item.updated_at, // 最后更新时间 (判断项目死活的关键)
+
         // 存入 AI 数据
         category: aiData.category,
         description: aiData.tagline,
@@ -220,6 +227,8 @@ async function main() {
           best_for: aiData.best_for,
           competitor_name: aiData.competitor_name,
           comparison_table: aiData.comparison_table,
+          long_summary: aiData.long_summary,
+          use_cases: aiData.use_cases,
         },
       };
     }
