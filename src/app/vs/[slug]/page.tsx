@@ -41,28 +41,43 @@ export default async function VsPage({ params }: Props) {
   const competitor =
     tool.rich_features?.competitor_name || "Proprietary Software";
 
-  const comparisons = tool.rich_features?.comparison_table || [
-    {
-      feature: "Pricing",
-      saas_value: "$$$ Monthly Subscription",
-      os_value: "Free & Open Source",
-    },
-    {
-      feature: "Data Privacy",
-      saas_value: "They own your data",
-      os_value: "100% Self-hosted",
-    },
-    {
-      feature: "Customization",
-      saas_value: "Limited",
-      os_value: "Full Code Access",
-    },
+  const comparisonData = tool.rich_features?.comparison_table;
+
+  let comparisons: { feature: string; saas_value: string; os_value: string }[] = [];
+
+  if (comparisonData) {
+    // 将数据库中的 Record<string, ...> 转换为数组格式
+    comparisons = Object.entries(comparisonData).map(([key, val]) => ({
+      feature: key,
+      // @ts-expect-error 处理潜在的类型不一致（只要有值就行）
+      saas_value: val.competitor || val.saas_value || "N/A",
+      // @ts-expect-error 处理潜在的类型不一致
+      os_value: val.open_source || val.os_value || "Yes"
+    }));
+  } else {
+    // 默认值
+    comparisons = [
+      {
+        feature: "Pricing",
+        saas_value: "$$$ Monthly Subscription",
+        os_value: "Free & Open Source",
+      },
+      {
+        feature: "Data Privacy",
+        saas_value: "They own your data",
+        os_value: "100% Self-hosted",
+      },
+      {
+        feature: "Customization",
+        saas_value: "Limited",
+        os_value: "Full Code Access",
+      },
     ];
-    
-    const toolUrl = tool.url;
-    // 🔥 这里的 content 标记为 'vs-card'，以便区分流量来源是“卡片”还是“计算器”
-    const trackableUrl = `${toolUrl}${
-      toolUrl.includes("?") ? "&" : "?"
+  }
+
+  const toolUrl = tool.url;
+  // 🔥 这里的 content 标记为 'vs-card'，以便区分流量来源是“卡片”还是“计算器”
+  const trackableUrl = `${toolUrl}${toolUrl.includes("?") ? "&" : "?"
     }utm_source=saas-killer&utm_medium=directory&utm_content=vs-card`;
 
   return (
@@ -176,7 +191,7 @@ export default async function VsPage({ params }: Props) {
             <h3 className="font-bold text-gray-700">Detailed Breakdown</h3>
           </div>
           <div className="divide-y divide-gray-100">
-            {comparisons.map((row: any, idx: number) => (
+            {comparisons.map((row, idx) => (
               <div
                 key={idx}
                 className="grid grid-cols-3 p-6 gap-4 hover:bg-gray-50 transition-colors"
