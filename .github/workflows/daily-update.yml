@@ -37,6 +37,7 @@ jobs:
         BATCH_SIZE: ${{ secrets.BATCH_SIZE || 8 }}
         MAX_RETRIES: ${{ secrets.MAX_RETRIES || 5 }}
         DATABASE_PATH: ${{ secrets.DATABASE_PATH || 'data/tools.db' }}
+        UPDATE_MODE: ${{ secrets.UPDATE_MODE || 'incremental' }}
       run: |
         echo "🕷️ Starting crawler..."
         node scripts/fetch-github-data.js

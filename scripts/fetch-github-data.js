@@ -324,6 +324,12 @@ async function main() {
   }
 
   // 3. 去重与检查 (Check Database directly!)
+  // 🔥 环境变量控制更新策略
+  // 'incremental' (默认): 旧项目只更新 GitHub API 来源数据，不重跑 AI
+  // 'full': 强制重跑所有项目的 AI 分析
+  const UPDATE_MODE = process.env.UPDATE_MODE || "incremental";
+  console.log(`\n🛡️ Update Mode: ${UPDATE_MODE}`);
+
   const uniqueItems = [];
   const seen = new Set();
 
@@ -332,16 +338,56 @@ async function main() {
     "SELECT rich_features_json FROM tools WHERE slug = ?"
   );
 
+  // 预编译更新基础数据的 SQL (所有 GitHub 可直接获取的字段，不涉及 AI 生成字段)
+  const updateStatsStmt = db.prepare(`
+    UPDATE tools 
+    SET stars = @stars, 
+        forks = @forks, 
+        issues = @issues, 
+        updated_at = @updated_at,
+        url = @url,
+        license = @license,
+        language = @language,
+        logo = @logo
+    WHERE slug = @slug
+  `);
+
   for (const item of rawItems) {
     const slug = item.name.toLowerCase();
 
-    // 🔥 查库：如果数据库里已经有这个工具，并且有 long_summary，就跳过
+    // 🔥 查库
     const row = checkStmt.get(slug);
+
     if (row) {
+      // 数据库里已经有这个项目
       const rich = JSON.parse(row.rich_features_json || "{}");
-      if (rich.long_summary) continue; // 已经完美了，跳过
+      const hasAiData = rich.long_summary && rich.category;
+
+      if (hasAiData && UPDATE_MODE !== "full") {
+        // ⚡ 增量模式：更新所有 GitHub 可获取的数据，跳过 AI
+        if (!seen.has(slug)) { // 避免重复更新同一条
+          updateStatsStmt.run({
+            stars: item.stargazers_count,
+            forks: item.forks_count,
+            issues: item.open_issues_count,
+            updated_at: item.updated_at,
+            url: item.homepage || item.html_url,
+            license: item.license ? item.license.spdx_id : "Unknown",
+            language: item.language || "Unknown",
+            logo: item.owner.avatar_url,
+            slug: slug
+          });
+          // console.log(`   🔄 Updated stats for ${item.name} (Stars: ${item.stargazers_count})`);
+          seen.add(slug);
+        }
+        continue; // 跳过后续的 AI 处理
+      }
     }
 
+    // 如果运行到这里，说明是：
+    // 1. 新项目 (row 不存在)
+    // 2. 旧项目但不完整 (缺少 AI 数据)
+    // 3. 全量更新模式 (UPDATE_MODE === 'full')
     if (!seen.has(slug)) {
       seen.add(slug);
       uniqueItems.push(item);
