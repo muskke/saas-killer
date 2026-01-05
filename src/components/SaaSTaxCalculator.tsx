@@ -31,6 +31,12 @@ export default function SaaSTaxCalculator({
     setPricePerUser(getCompetitorPrice(competitorName));
   }, [competitorName]);
 
+  // 🔥 构造带有追踪参数的 URL
+  // 逻辑：如果原 URL 已有 ? 则加 &，否则加 ?
+  const trackableUrl = `${toolUrl}${
+    toolUrl.includes("?") ? "&" : "?"
+  }utm_source=saas-killer&utm_medium=directory&utm_content=calculator`;
+
   return (
     <div className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-3xl p-6 md:p-8 text-white shadow-2xl border border-gray-700 relative overflow-hidden mb-16 isolate">
       {/* 背景光效 */}
@@ -163,14 +169,14 @@ export default function SaaSTaxCalculator({
           </div>
 
           <a
-            // 加上 utm_source 和 utm_content
-            href={`${toolUrl}${
-              toolUrl.includes("?") ? "&" : "?"
-            }utm_source=saas-killer&utm_content=calculator`}
+            href={trackableUrl}
             target="_blank"
             rel="noopener noreferrer"
             className="w-full mt-8 bg-gray-900 hover:bg-black text-white font-bold py-4 rounded-xl transition-all shadow-xl hover:shadow-2xl flex items-center justify-center gap-2 group transform active:scale-95 cursor-pointer"
-          ></a>
+          >
+            Start Saving Today
+            <ArrowRight size={18} className="..." />
+          </a>
 
           <p className="text-center text-[10px] text-gray-400 mt-4">
             Calculations based on {users} users at ${pricePerUser}/mo.

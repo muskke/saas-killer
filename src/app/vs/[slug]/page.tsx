@@ -57,7 +57,13 @@ export default async function VsPage({ params }: Props) {
       saas_value: "Limited",
       os_value: "Full Code Access",
     },
-  ];
+    ];
+    
+    const toolUrl = tool.url;
+    // 🔥 这里的 content 标记为 'vs-card'，以便区分流量来源是“卡片”还是“计算器”
+    const trackableUrl = `${toolUrl}${
+      toolUrl.includes("?") ? "&" : "?"
+    }utm_source=saas-killer&utm_medium=directory&utm_content=vs-card`;
 
   return (
     <main className="min-h-screen bg-gray-50 pb-20">
@@ -150,9 +156,7 @@ export default async function VsPage({ params }: Props) {
             </ul>
             <div className="mt-8 pt-8 border-t border-gray-100">
               <a
-                href={`${tool.url}${
-                  tool.url.includes("?") ? "&" : "?"
-                }utm_source=saas-killer&utm_content=vs-card`}
+                href={trackableUrl}
                 target="_blank"
                 className="block w-full text-center bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 rounded-xl transition-all shadow-lg hover:shadow-indigo-200"
               >
