@@ -25,7 +25,7 @@ export default function Navbar() {
                 {/* 右上角导航 - 贴边 */}
                 <div className="flex items-center gap-4">
                     <a
-                        href="https://github.com/muskke"
+                        href="https://github.com/muskke/saas-killer"
                         target="_blank"
                         rel="noopener noreferrer"
                         className="text-slate-300 hover:text-white transition-colors flex items-center gap-2 text-sm font-medium"
