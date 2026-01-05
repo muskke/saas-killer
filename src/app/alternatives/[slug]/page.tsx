@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { getAllTools, getToolBySlug } from "@/lib/db";
+import { getCompetitorPrice } from "@/lib/pricing-utils";
 import type { Metadata } from "next";
 import AdBanner from "@/components/AdBanner";
 import Comments from "@/components/Comments";
@@ -60,19 +61,8 @@ export default async function Page({ params }: Props) {
   // 1. 获取竞品名称
   const competitorName = tool.rich_features?.competitor_name || "SaaS";
 
-  // 2. 定义一个简单的估价函数 (你可以根据你的数据量慢慢补充)
-  const getSaaSPrice = (name: string) => {
-    const n = name.toLowerCase();
-    if (n.includes("shopify")) return 29; // Shopify Basic $29/mo
-    if (n.includes("salesforce")) return 25; // CRM usually expensive
-    if (n.includes("slack")) return 8;
-    if (n.includes("notion")) return 10;
-    if (n.includes("airtable")) return 20;
-    if (n.includes("jira")) return 15;
-    return 12; // 默认平均值 (Notion/Trello 标准)
-  };
-
-  const pricePerUser = getSaaSPrice(competitorName);
+  // 2. 使用统一的估价函数 (来自 lib/pricing-utils.ts)
+  const pricePerUser = getCompetitorPrice(competitorName);
   const teamSize = 10; // 设定一个 Teaser 用的默认团队大小
   const annualLoss = pricePerUser * teamSize * 12; // 计算年亏损
 
@@ -263,12 +253,11 @@ export default async function Page({ params }: Props) {
                   <span className="text-gray-400">Last Update</span>
                   <div className="flex items-center gap-2">
                     <span
-                      className={`w-2 h-2 rounded-full ${
-                        new Date(tool.updated_at).getTime() >
+                      className={`w-2 h-2 rounded-full ${new Date(tool.updated_at).getTime() >
                         Date.now() - 90 * 24 * 60 * 60 * 1000
-                          ? "bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.6)]"
-                          : "bg-orange-400"
-                      }`}
+                        ? "bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.6)]"
+                        : "bg-orange-400"
+                        }`}
                     ></span>
                     <span className="font-medium text-gray-700">
                       {new Date(tool.updated_at).toLocaleDateString()}
