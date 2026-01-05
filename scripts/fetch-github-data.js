@@ -4,9 +4,83 @@ const path = require("path");
 const OpenAI = require("openai");
 const Database = require("better-sqlite3");
 
+// --- Environment Validation & Sanitization ---
+function validateAndSanitizeEnv() {
+  console.log("🔒 Validating environment configuration...");
+  const keys = ["GITHUB_TOKEN", "OPENAI_API_KEY"];
+  let hasError = false;
+
+  keys.forEach((key) => {
+    let value = process.env[key];
+    if (!value) {
+      console.error(`❌ Missing environment variable: ${key}`);
+      hasError = true;
+      return;
+    }
+
+    // Common Mistake 3: User pasted the ENTIRE .env file (multi-line)
+    if (value.includes("\n")) {
+      console.warn(`⚠️  Detected multi-line content in ${key}, attempting to extract value...`);
+      // Try to find the specific line "KEY=value" inside the blob
+      const match = value.match(new RegExp(`^${key}=(.+)$`, "m"));
+      if (match) {
+        value = match[1];
+        console.log(`✨ Successfully extracted ${key} from multi-line text.`);
+      } else {
+        // If not found, maybe they pasted the .env but we are looking at specific key
+        // Let's try to just take the first line if it looks like a token, 
+        // OR warn them if it looks like they pasted the wrong secret into the wrong variable.
+
+        // Fallback: splitting by newline and taking the first non-empty line that doesn't start with #
+        const lines = value.split("\n").map(l => l.trim()).filter(l => l && !l.startsWith("#"));
+        if (lines.length > 0) {
+          // Check if one of the lines is just the token (no "=")
+          const cleanLine = lines.find(l => !l.includes("="));
+          if (cleanLine) {
+            value = cleanLine;
+          } else {
+            // Maybe they pasted "OTHER_KEY=..." into THIS secret? 
+            // It's getting messy, let's just use the first line and hope.
+            value = lines[0];
+          }
+        }
+      }
+    }
+
+    // Common Mistake 1: User pasted "KEY=value" (single line)
+    if (value.startsWith(`${key}=`)) {
+      console.warn(`⚠️  Detected prefix in ${key}, fixing...`);
+      value = value.replace(`${key}=`, "");
+    }
+
+    // Common Mistake 2: Quotes around the value
+    if ((value.startsWith('"') && value.endsWith('"')) || (value.startsWith("'") && value.endsWith("'"))) {
+      console.warn(`⚠️  Detected quotes in ${key}, fixing...`);
+      value = value.slice(1, -1);
+    }
+
+    // Final trim
+    process.env[key] = value.trim();
+
+    // Log masked status
+    const masked = (process.env[key] && process.env[key].length > 8)
+      ? `${process.env[key].substring(0, 4)}...${process.env[key].substring(process.env[key].length - 4)}`
+      : "******";
+    console.log(`✅ ${key} configured (Value: ${masked})`);
+  });
+
+  if (hasError) {
+    console.error("\n💥 Critical configuration errors found. Please check your GitHub Secrets.");
+    process.exit(1);
+  }
+}
+
+// Execute validation before initializing clients
+validateAndSanitizeEnv();
+
 // 初始化 AI (兼容 OpenAI 格式)
 const openai = new OpenAI({
-  baseURL: process.env.OPENAI_BASE_URL, 
+  baseURL: process.env.OPENAI_BASE_URL,
   apiKey: process.env.OPENAI_API_KEY,
 });
 
@@ -168,7 +242,7 @@ async function analyzeBatchWithAI(repos) {
 
       const completion = await openai.chat.completions.create({
         messages: [{ role: "user", content: prompt }],
-        model: process.env.OPENAI_MODEL_ID, 
+        model: process.env.OPENAI_MODEL_ID,
         temperature: 0.1, //以此降低幻觉
       });
 
