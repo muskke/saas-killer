@@ -163,7 +163,7 @@ export const WelcomeEmail = ({
                                         ⭐ Star on GitHub
                                     </Link>
                                     <span style={{ color: '#444', margin: '0 12px' }}>|</span>
-                                    <Link href="https://twitter.com/saaskiller" style={socialLink}>
+                                    <Link href="https://x.com/musk_ke" style={socialLink}>
                                         🐦 Follow on X
                                     </Link>
                                 </td>
@@ -178,8 +178,10 @@ export const WelcomeEmail = ({
                             <br />
                             — The SaaS Killer Team
                         </Text>
-                        <Text style={footerLinksStyle}>
-                            <Link href={`${baseUrl}/unsubscribe?email=${email}`} style={unsubLink}>
+                        <Text style={footerCopyright}>
+                            © {new Date().getFullYear()} SaaS Killer ·
+                            <Link href={baseUrl} style={footerLink}>Visit Website</Link> ·
+                            <Link href={`${baseUrl}/unsubscribe?email=${email}`} style={footerLink}>
                                 Unsubscribe
                             </Link>
                         </Text>
@@ -256,6 +258,7 @@ const ctaButton = {
     fontWeight: '600',
     textDecoration: 'none',
     display: 'inline-block',
+    boxShadow: '0 0 20px rgba(99, 102, 241, 0.4)',
 };
 
 const divider = {
@@ -278,6 +281,7 @@ const sectionHeading = {
 const toolCard = {
     backgroundColor: '#1a1a1a',
     border: '1px solid #2a2a2a',
+    borderLeft: '3px solid #6366f1',
     borderRadius: '8px',
     padding: '16px',
     marginBottom: '12px',
@@ -359,6 +363,17 @@ const footerLinksStyle = {
 const unsubLink = {
     color: '#52525b',
     textDecoration: 'underline',
+};
+
+const footerCopyright = {
+    fontSize: '11px',
+    color: '#52525b',
+    margin: '0',
+};
+
+const footerLink = {
+    color: '#71717a',
+    textDecoration: 'none',
 };
 
 export default WelcomeEmail;
