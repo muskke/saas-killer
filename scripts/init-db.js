@@ -39,9 +39,25 @@ const createTableQuery = `
 
 db.exec(createTableQuery);
 
+// 🔥 创建 Star 历史记录表 (用于追踪每周增长)
+const createStarHistoryTableQuery = `
+  CREATE TABLE IF NOT EXISTS tool_star_history (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    slug TEXT NOT NULL,
+    stars INTEGER NOT NULL,
+    recorded_at DATE NOT NULL DEFAULT (DATE('now')),
+    UNIQUE(slug, recorded_at),
+    FOREIGN KEY (slug) REFERENCES tools(slug) ON DELETE CASCADE
+  );
+`;
+db.exec(createStarHistoryTableQuery);
+
 // 2. 创建索引
 db.exec("CREATE INDEX IF NOT EXISTS idx_category ON tools(category)");
 db.exec("CREATE INDEX IF NOT EXISTS idx_stars ON tools(stars DESC)");
+db.exec("CREATE INDEX IF NOT EXISTS idx_star_history_slug ON tool_star_history(slug)");
+db.exec("CREATE INDEX IF NOT EXISTS idx_star_history_date ON tool_star_history(recorded_at)");
 
 console.log("✅ Database schema created successfully at data/tools.db");
 db.close();
+

@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { resend } from '@/lib/resend';
-import { getTopTools } from '@/lib/db';
+import { getWeeklyTopTools } from '@/lib/db';
 import WeeklyDigestEmail, { HotTool } from '@/emails/WeeklyDigestEmail';
 
 // 格式化星星数
@@ -26,7 +26,7 @@ export async function GET(request: Request) {
         }
 
         // 2. 获取本周增长最快的前 5 个工具
-        const tools = await getTopTools(5);
+        const tools = await getWeeklyTopTools(5);
         if (tools.length === 0) {
             return NextResponse.json({ message: 'No tools to send' });
         }

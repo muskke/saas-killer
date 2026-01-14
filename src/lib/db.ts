@@ -111,3 +111,35 @@ export async function getTopTools(limit: number = 3): Promise<Tool[]> {
   }));
 }
 
+// 🔥 基于历史数据计算准确的每周 Star 增长
+// 会查找 7 天前的历史记录来计算增长
+export async function getWeeklyTopTools(limit: number = 3): Promise<(Tool & { star_growth: number })[]> {
+  const database = getDb();
+
+  // 1. 查询：连接 tools 表和 7 天前的历史记录
+  // 使用子查询获取每个 slug 最接近 7 天前的记录
+  const rows = database
+    .prepare(
+      `
+    SELECT 
+      t.*,
+      (t.stars - COALESCE(h.stars, 0)) AS star_growth
+    FROM tools t
+    LEFT JOIN (
+      SELECT slug, stars
+      FROM tool_star_history
+      WHERE recorded_at <= DATE('now', '-7 days')
+      ORDER BY recorded_at DESC
+    ) h ON t.slug = h.slug
+    GROUP BY t.slug
+    ORDER BY star_growth DESC, t.stars DESC
+    LIMIT ?
+  `
+    )
+    .all(limit) as (ToolRow & { star_growth: number })[];
+
+  return rows.map((row) => ({
+    ...row,
+    rich_features: JSON.parse(row.rich_features_json || "{}") as RichFeatures,
+  }));
+}

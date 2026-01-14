@@ -354,6 +354,13 @@ async function main() {
     WHERE slug = @slug
   `);
 
+  // 🔥 新增：每日 Star 历史记录插入语句
+  // 使用 INSERT OR IGNORE 以确保每个 slug 每天只有一条记录
+  const insertStarHistoryStmt = db.prepare(`
+    INSERT OR IGNORE INTO tool_star_history (slug, stars, recorded_at)
+    VALUES (@slug, @stars, DATE('now'))
+  `);
+
   for (const item of rawItems) {
     const slug = item.name.toLowerCase();
 
@@ -379,7 +386,11 @@ async function main() {
             logo: item.owner.avatar_url,
             slug: slug
           });
-          // console.log(`   🔄 Updated stats for ${item.name} (Stars: ${item.stargazers_count})`);
+          // 🔥 记录今日 Star 到历史表
+          insertStarHistoryStmt.run({
+            slug: slug,
+            stars: item.stargazers_count
+          });
           seen.add(slug);
         }
         continue; // 跳过后续的 AI 处理
@@ -441,6 +452,12 @@ async function main() {
           forks: item.forks_count,
           issues: item.open_issues_count,
           rich_features_json: JSON.stringify(richFeatures),
+        });
+
+        // 🔥 为新工具也记录 Star 历史
+        insertStarHistoryStmt.run({
+          slug: slug,
+          stars: item.stargazers_count
         });
       }
     });
