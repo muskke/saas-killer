@@ -99,8 +99,7 @@ export async function getTopTools(limit: number = 3): Promise<Tool[]> {
       `
     SELECT *, (stars - COALESCE(stars_prev, 0)) AS star_growth 
     FROM tools 
-    WHERE stars > stars_prev
-    ORDER BY star_growth DESC
+    ORDER BY star_growth DESC, stars DESC
     LIMIT ?
   `
     )
