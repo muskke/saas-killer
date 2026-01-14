@@ -13,6 +13,8 @@ export default async function Home() {
     // 简介只取前 100 个字符，防止太长
     description: tool.description?.slice(0, 100) + '...',
     category: tool.category,
+    parent_category: tool.parent_category,
+    subcategory: tool.subcategory,
     stars: tool.stars,
     logo: tool.logo,
     // 如果 ToolGrid 还需要竞品名，就只留这一个，其他的 pros/cons/table 全扔掉
@@ -66,7 +68,7 @@ export default async function Home() {
       {/* 2. Client Side Interaction (交互引擎) */}
       {/* 我们把数据传给 ToolGrid，让它在浏览器里处理搜索 */}
       {/* 🚀 传给组件的是 slimTools，体积只有原来的 1/10 */}
-      <ToolGrid tools={sortedTools} categories={categories} />
+      <ToolGrid tools={sortedTools} />
       <Newsletter />
 
       {/* Footer */}

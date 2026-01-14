@@ -14,11 +14,16 @@ type Tool = {
   stars: number;
   logo?: string;
   license?: string;
+  subcategory?: string; // New 2-level
+  parent_category?: string; // New 2-level
   rich_features?: {
     competitor_name?: string;
     best_for?: string;
   };
 };
+
+// 🏛️ Taxonomy - 从统一定义导入
+import { TAXONOMY_ARRAY as TAXONOMY } from '@/lib/taxonomy';
 
 // 🎨 Spotlight Card Component with Enhanced Visuals
 const ToolCard = ({ tool, categoryColor, index }: { tool: Tool; categoryColor: string; index: number }) => {
@@ -145,8 +150,8 @@ const ToolCard = ({ tool, categoryColor, index }: { tool: Tool; categoryColor: s
           <div className="flex items-center gap-4">
             {/* Star Count with Animation */}
             <div className={`flex items-center gap-1.5 font-semibold transition-all duration-300 ${isPopular
-                ? 'text-amber-500 dark:text-amber-400'
-                : 'text-gray-400 dark:text-zinc-500 group-hover:text-amber-500 dark:group-hover:text-amber-400'
+              ? 'text-amber-500 dark:text-amber-400'
+              : 'text-gray-400 dark:text-zinc-500 group-hover:text-amber-500 dark:group-hover:text-amber-400'
               }`}>
               <Star size={16} className={`transition-all duration-300 ${isPopular ? 'fill-current' : 'group-hover:fill-current'}`} />
               <span>
@@ -251,32 +256,62 @@ const SponsoredCard = () => {
 }
 
 
-export default function ToolGrid({ tools, categories }: { tools: Tool[], categories: string[] }) {
+export default function ToolGrid({ tools }: { tools: Tool[] }) {
   const [search, setSearch] = useState('');
-  const [activeCategory, setActiveCategory] = useState('All');
+  const [activeParent, setActiveParent] = useState('All');
+  const [activeSub, setActiveSub] = useState('All');
   const [displayCount, setDisplayCount] = useState(24);
+
+  // Reset subcategory when parent changes
+  const handleParentChange = (pid: string) => {
+    setActiveParent(pid);
+    setActiveSub('All');
+    setDisplayCount(24);
+  };
 
   const filteredTools = useMemo(() => {
     return tools.filter((tool) => {
       if (!tool || !tool.name) return false;
       const toolName = (tool.name || '').toLowerCase();
       const toolDesc = (tool.description || '').toLowerCase();
-      const toolCat = (tool.category || 'Uncategorized');
+      // Normalized search
       const searchLower = search.toLowerCase();
       const matchesSearch = toolName.includes(searchLower) || toolDesc.includes(searchLower);
-      const matchesCategory = activeCategory === 'All' || toolCat === activeCategory;
+
+      // 🔍 Category Filter Logic
+      let matchesCategory = true;
+
+      if (activeParent !== 'All') {
+        // Strict mapping: Check if tool.parent_category matches
+        // Fallback: If legacy data (parent_category missing), maybe try to guess? 
+        // For now, we assume data is being migrated. 
+        // If parent_category is empty, we exclude it from specific filters to avoid noise, or show in "All"
+        if (tool.parent_category !== activeParent) {
+          matchesCategory = false;
+        } else {
+          // If Parent matches, check Subcategory
+          if (activeSub !== 'All' && tool.category !== activeSub && tool.subcategory !== activeSub) {
+            matchesCategory = false;
+          }
+        }
+      }
+
       return matchesSearch && matchesCategory;
     });
-  }, [tools, search, activeCategory]);
+  }, [tools, search, activeParent, activeSub]);
 
   const visibleTools = filteredTools.slice(0, displayCount);
 
+  // Get active subcategories for secondary nav
+  const activePillar = TAXONOMY.find(t => t.id === activeParent);
+  const visibleSubcategories = activePillar ? activePillar.subcategories : [];
+
   // Category Colors - More vibrant
   const getCategoryTheme = (cat: string) => {
-    if (['BaaS', 'DevOps', 'Security', 'Database'].includes(cat)) return 'bg-cyan-500/10 text-cyan-600 dark:text-cyan-300 border-cyan-500/30 group-hover:bg-cyan-500/20';
-    if (['Design', 'Media', 'UI'].includes(cat)) return 'bg-fuchsia-500/10 text-fuchsia-600 dark:text-fuchsia-300 border-fuchsia-500/30 group-hover:bg-fuchsia-500/20';
-    if (['CRM', 'ERP', 'Finance', 'No-Code', 'E-commerce'].includes(cat)) return 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-300 border-emerald-500/30 group-hover:bg-emerald-500/20';
-    if (['Note-taking', 'Productivity', 'Docs'].includes(cat)) return 'bg-amber-500/10 text-amber-600 dark:text-amber-300 border-amber-500/30 group-hover:bg-amber-500/20';
+    // Simplified theme logic or utilize TAXONOMY colors if needed
+    // Keeping existing logic for now, but falling back to default
+    if (['BaaS', 'DevOps', 'Security', 'Database', 'Backend & Auth'].some(c => cat.includes(c))) return 'bg-cyan-500/10 text-cyan-600 dark:text-cyan-300 border-cyan-500/30 group-hover:bg-cyan-500/20';
+    if (['Design', 'Media', 'UI', 'Creative'].some(c => cat.includes(c))) return 'bg-fuchsia-500/10 text-fuchsia-600 dark:text-fuchsia-300 border-fuchsia-500/30 group-hover:bg-fuchsia-500/20';
     return 'bg-indigo-500/10 text-indigo-600 dark:text-indigo-300 border-indigo-500/30 group-hover:bg-indigo-500/20';
   };
 
@@ -284,9 +319,9 @@ export default function ToolGrid({ tools, categories }: { tools: Tool[], categor
     <div className="max-w-7xl mx-auto px-4 py-12 relative z-10">
 
       {/* 🔍 Search & Filter Section */}
-      <div className="mb-12 space-y-8">
+      <div className="mb-12 space-y-6">
         {/* Search with Animated Glow */}
-        <div className="max-w-3xl mx-auto relative group">
+        <div className="max-w-3xl mx-auto relative group mb-8">
           <div className="absolute -inset-1 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 rounded-2xl opacity-0 group-focus-within:opacity-75 blur-lg transition-all duration-500 animate-gradient-x"></div>
           <div className="relative bg-white dark:bg-zinc-900 rounded-xl flex items-center p-2 shadow-xl border border-gray-100 dark:border-zinc-800 group-focus-within:border-transparent transition-colors">
             <Search className="ml-4 text-gray-400 group-focus-within:text-indigo-500 transition-colors" size={22} />
@@ -300,39 +335,65 @@ export default function ToolGrid({ tools, categories }: { tools: Tool[], categor
             {search && (
               <button onClick={() => setSearch('')} className="p-2 hover:bg-gray-100 dark:hover:bg-zinc-800 rounded-lg text-gray-400 hover:text-gray-600 transition-colors">✕</button>
             )}
-            <div className="hidden md:flex px-3 py-1.5 bg-gray-50 dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700 rounded-lg text-xs text-gray-400 font-mono">
-              ⌘K
-            </div>
           </div>
         </div>
 
-        {/* Categories - Pill Style */}
-        <div className="flex flex-wrap justify-center gap-2">
+        {/* 🏆 Primary Navigation (Pillars) - Scrollable on Mobile */}
+        <div className="flex overflow-x-auto pb-4 gap-3 md:justify-center scrollbar-hide -mx-4 px-4 md:mx-0">
           <button
-            onClick={() => setActiveCategory('All')}
-            className={`px-5 py-2.5 rounded-full text-sm font-semibold transition-all duration-300 ${activeCategory === 'All'
-              ? 'bg-gradient-to-r from-indigo-500 to-purple-600 text-white shadow-lg shadow-indigo-500/30 scale-105'
-              : 'bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 text-gray-600 dark:text-gray-400 hover:border-indigo-300 dark:hover:border-indigo-500/30 hover:text-indigo-600 dark:hover:text-indigo-400 hover:-translate-y-0.5 hover:shadow-md'
+            onClick={() => handleParentChange('All')}
+            className={`flex items-center gap-2 px-5 py-3 rounded-xl text-sm font-bold whitespace-nowrap transition-all duration-300 ${activeParent === 'All'
+              ? 'bg-gradient-to-r from-slate-800 to-black dark:from-white dark:to-gray-200 text-white dark:text-black shadow-lg scale-105'
+              : 'bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-zinc-800'
               }`}
           >
             ✨ All Tools
           </button>
-          {categories.map((cat) => (
+
+          {TAXONOMY.map((pillar) => (
             <button
-              key={cat}
-              onClick={() => setActiveCategory(cat)}
-              className={`px-5 py-2.5 rounded-full text-sm font-semibold transition-all duration-300 ${activeCategory === cat
-                ? 'bg-gradient-to-r from-indigo-500 to-purple-600 text-white shadow-lg shadow-indigo-500/30 scale-105'
-                : 'bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 text-gray-600 dark:text-gray-400 hover:border-indigo-300 dark:hover:border-indigo-500/30 hover:text-indigo-600 dark:hover:text-indigo-400 hover:-translate-y-0.5 hover:shadow-md'
+              key={pillar.id}
+              onClick={() => handleParentChange(pillar.id)}
+              className={`flex items-center gap-2 px-5 py-3 rounded-xl text-sm font-bold whitespace-nowrap transition-all duration-300 ${activeParent === pillar.id
+                ? 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-lg shadow-indigo-500/30 scale-105 border-transparent'
+                : 'bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 text-gray-600 dark:text-gray-400 hover:border-indigo-300 dark:hover:border-indigo-500/30 hover:text-indigo-600 dark:hover:text-indigo-400'
                 }`}
             >
-              {cat}
+              <span>{pillar.icon}</span>
+              <span>{pillar.label}</span>
             </button>
           ))}
         </div>
+
+        {/* 🔖 Secondary Navigation (Subcategories) - Only show if Parent selected */}
+        {activeParent !== 'All' && visibleSubcategories.length > 0 && (
+          <div className="flex flex-wrap justify-center gap-2 animate-fade-in-down">
+            <button
+              onClick={() => setActiveSub('All')}
+              className={`px-4 py-1.5 rounded-full text-xs font-semibold transition-all ${activeSub === 'All'
+                ? 'bg-indigo-100 dark:bg-indigo-500/20 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-500/30'
+                : 'text-gray-500 dark:text-zinc-500 hover:bg-gray-100 dark:hover:bg-zinc-800'
+                }`}
+            >
+              All {TAXONOMY.find(t => t.id === activeParent)?.label}
+            </button>
+            {visibleSubcategories.map((sub) => (
+              <button
+                key={sub}
+                onClick={() => setActiveSub(sub)}
+                className={`px-4 py-1.5 rounded-full text-xs font-semibold transition-all border ${activeSub === sub
+                  ? 'bg-white dark:bg-zinc-800 border-indigo-500 text-indigo-600 dark:text-indigo-400 shadow-sm'
+                  : 'bg-transparent border-transparent text-gray-500 dark:text-zinc-500 hover:text-gray-700 dark:hover:text-zinc-300 hover:bg-gray-50 dark:hover:bg-zinc-900'
+                  }`}
+              >
+                {sub}
+              </button>
+            ))}
+          </div>
+        )}
       </div>
 
-      <AdBanner category={activeCategory} />
+      <AdBanner category={activeParent} />
 
       {/* 📦 Tool Grid */}
       {filteredTools.length > 0 ? (
@@ -367,7 +428,7 @@ export default function ToolGrid({ tools, categories }: { tools: Tool[], categor
             We couldn't find any tools matching "{search}". Try a different search term.
           </p>
           <button
-            onClick={() => { setSearch(''); setActiveCategory('All'); }}
+            onClick={() => { setSearch(''); setActiveParent('All'); setActiveSub('All'); }}
             className="px-6 py-3 bg-gradient-to-r from-indigo-500 to-purple-600 text-white font-bold rounded-full hover:shadow-lg hover:shadow-indigo-500/25 transition-all active:scale-95"
           >
             Clear all filters

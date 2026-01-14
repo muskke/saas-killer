@@ -88,47 +88,25 @@ const openai = new OpenAI({
 const dbPath = path.join(__dirname, "..", process.env.DATABASE_PATH || "data/tools.db");
 const db = new Database(dbPath);
 
-// 搜索关键词
-const SEARCH_QUERIES = [
-  // 1. 通用大词 (Generic High-Volume)
-  "topic:open-source-alternative",
-  "topic:self-hosted",
-  "topic:privacy-focused",
-  "topic:opensource",
-  "topic:free-software",
+// 🏛️ TAXONOMY - 从统一定义导入
+// 使用 require('@esbuild-kit/cjs-loader') 或 tsx 运行此脚本以支持 TS 导入
+// 为了简化，我们直接复用 taxonomy.ts 中的结构，通过 require('tsx/cjs/api') 实现
+// 或者，更简单：我们将 taxonomy.ts 编译输出为 taxonomy.cjs 或直接在这里 import
 
-  // 2. SaaS 巨头精准狙击 (High Value Targets)
-  // 办公/生产力
-  "notion alternative",
-  "airtable alternative",
-  "slack alternative",
-  "trello alternative",
-  "zoom alternative",
-  "docusign alternative", // 电子签章，很贵
+// 🔧 方案：使用 Node.js 原生 import() 异步导入 TS (需要 Node 18+ 且配置 tsconfig)
+// 但为了兼容性，我们使用一个中间 JSON 文件，或者直接在这里保留 JS 版本，由 taxonomy.ts 生成
 
-  // 开发者服务 (BaaS/Infra - 这是最赚钱的领域)
-  "firebase alternative", // 比如 Supabase
-  "vercel alternative", // 比如 Coolify
-  "heroku alternative",
-  "auth0 alternative", // 比如 Clerk/Logto
-  "datadog alternative", // 比如 SigNoz
-  "sentry alternative",
+// 🛠️ 实用方案：使用 esbuild-register 或 tsx 作为 Node loader
+// 运行命令改为: npx tsx scripts/fetch-github-data.js
 
-  // 设计与媒体
-  "figma alternative", // 比如 Penpot
-  "adobe alternative", // 比如 Photopea
-  "canva alternative",
+// 🚀 直接读取编译后的 taxonomy (需要先 build)
+// 或者使用 eval(require('fs').readFileSync('./src/lib/taxonomy.ts', 'utf8')) -- 不推荐
 
-  // 营销与电商
-  "shopify alternative",
-  "mailchimp alternative", // 比如 Listmonk
-  "intercom alternative", // 客服系统
-  "google-analytics alternative", // 比如 Plausible
-
-  // 3. 极客关键词 (Hidden Gems)
-  "topic:build-your-own-x", // 很多硬核项目在这里
-  "topic:low-code",
-];
+// ✅ 最佳实践：将 TAXONOMY 移到 JSON 文件，JS/TS 都可以 import
+const taxonomyModule = require('../src/lib/taxonomy.cjs'); // 我们将创建此文件
+const TAXONOMY = taxonomyModule.TAXONOMY;
+const generateSearchQueries = taxonomyModule.generateSearchQueries;
+const SEARCH_QUERIES = generateSearchQueries();
 
 // 🔥 核心配置：批处理大小
 // 建议设置为 5-10。太大容易导致 AI 响应超时或 JSON 截断。
@@ -187,47 +165,97 @@ async function analyzeBatchWithAI(repos) {
 
     Task: Return a STRICT JSON object where the KEY is the tool name (lowercase) and the VALUE is the analysis object.
     
-    For EACH tool, the analysis object must contain:
-    1. "category": Choose ONE from the following list. Pick the MOST specific one:
-       
-       [Business]
-       - CRM (Customer Relationship)
-       - ERP (Enterprise Resource Planning)
-       - HRM (Human Resources)
-       - Finance (Accounting, Invoicing)
-       - Marketing (Email, SEO, Analytics)
-       - E-commerce (Stores, Inventory)
-       - Support (Helpdesk, Chatbots)
+    For EACH tool, you MUST perform a deep analysis to classify it into the following 6-Pillar Taxonomy.
+    
+    CRITICAL INSTRUCTION: You must choose ONE "parent_category" and ONE "subcategory" from the list below.
+    DO NOT invent new categories. 
+    DO NOT use "Docs" for Notion-likes (use "Knowledge Base").
+    DO NOT use "Database" for Supabase (use "Backend & Auth").
+    
+    [Taxonomy Tree]
+    
+    1. Modern Developer Stack (parent_category: "Dev")
+       - "Backend & Auth" (Firebase/Auth0 alternatives, BaaS, Realtime)
+       - "DevOps & CI/CD" (Vercel/Jenkins alternatives, Container, Git)
+       - "Database & Storage" (SQL, NoSQL, MinIO, Vector DB)
+       - "AI, ML & Data" (LLMs, LangChain, Agents, Training)
+       - "Frontend & Headless CMS" (Strapi, Next.js, UI Frameworks)
+       - "Automation & Workflow" (Zapier/n8n alternatives, RPA)
+       - "Data Visualization" (Grafana/Metabase alternatives, Charts)
+       - "Testing & QA" (E2E, Unit Testing, Load Testing)
+       - "Monitoring & Logs" (Datadog/Sentry alternatives, Observability)
+       - "Web3 & Blockchain" (Crypto, Smart Contracts, Nodes)
+       - "Game Development" (Engines, Assets, Sprites)
+       - "Low-Code & Builder" (Internal Tools, App Builders, DB GUI)
 
-       [Developer]
-       - BaaS (Backend as a Service: Auth, Database, Storage)
-       - DevOps (CI/CD, Docker, K8s)
-       - Monitoring (Observability, Logs, Uptime)
-       - Security (Password Managers, VPN, Identity)
-       - CMS (Headless, Static, Blogs)
-       - Database (SQL, NoSQL, Vector)
-       - AI/ML (LLMs, Training, Vector DBs)
+    2. Enterprise Solutions (parent_category: "Business")
+       - "CRM & Customer Success" (Salesforce alternatives)
+       - "ERP & Resource Mgmt" (SAP/Inventory alternatives)
+       - "Finance & Accounting" (QuickBooks/Invoicing)
+       - "HRM & Recruitment" (Workday/Hiring)
+       - "E-commerce & Retail" (Shopify/Storefronts)
+       - "Analytics & BI" (Tableau/Google Analytics alternatives)
+       - "Marketing & SEO" (HubSpot/Mailchimp alternatives)
+       - "Support & Helpdesk" (Intercom/Zendesk alternatives)
+       - "Forms & Surveys" (Typeform/Tally alternatives)
+       - "Community & Events" (Discourse/Meetup alternatives)
+       - "Legal & Compliance" (Contract mgmt, GDPR)
 
-       [Creative & Office]
-       - Design (UI/UX, Graphics, 3D)
-       - Media (Photo, Video, Streaming)
-       - Docs (Wiki, Knowledge Base, Office Suite)
-       - Note-taking (Personal Knowledge Management)
-       - Project Management (Kanban, Agile)
-       - Communication (Chat, Video, Team)
-       
-       [Other]
-       - Form Builder (Surveys)
-       - Automation (Workflow, IPA)
-       - Browser (Extensions, Privacy)
-    2. "tagline": A catchy, marketing-style one-liner (max 10 words).
-    3. "long_summary": A persuasive, 2-sentence description explaining WHAT the tool does and WHY it is special. (e.g. "Immich is a self-hosted photo backup solution that directly replaces Google Photos. It offers facial recognition, timeline view, and mobile backup without the monthly fees.")
-    4. "use_cases": An array of 3 specific scenarios where this tool shines (e.g. ["Wedding Photography Backup", "Family Server", "Private Portfolio"]).
-    5. "competitor_name": The SINGLE most famous SaaS tool this replaces.
-    6. "comparison_table": An array of EXACTLY 3 objects comparing OS vs SaaS (Pricing, Killer Feature, Privacy). Format: { "feature": "String", "os_value": "String", "saas_value": "String" }.
-    7. "best_for": Who is the ideal user?
-    8. "pros": Array of 3 strings.
-    9. "cons": Array of 3 strings.
+    3. Creative Studio (parent_category: "Creative")
+       - "UI/UX & Prototyping" (Figma/Sketch alternatives)
+       - "Graphic Design & Illustration" (Adobe Illustrator/Canva alternatives)
+       - "3D Modeling & Animation" (Blender/Maya alternatives)
+       - "Video Editing & Streaming" (Premiere/OBS alternatives)
+       - "Audio & Music Production" (DAW, Sound Processing)
+       - "Asset Management (DAM)" (Photo library, Media organizer)
+
+    4. Peak Productivity (parent_category: "Productivity")
+       - "Knowledge Base & Wiki" (Notion/Obsidian alternatives, Second Brain)
+       - "Project & Task Mgmt" (Jira/Trello/Linear alternatives)
+       - "Office Suite & Docs" (Microsoft 365/Google Docs alternatives)
+       - "Team Collaboration" (Slack/Discord/Teams alternatives)
+       - "Calendar & Scheduling" (Calendly alternatives)
+       - "Email Clients & Services" (Gmail/Outlook alternatives)
+       - "Education & Learning" (LMS, Flashcards)
+
+    5. Social & Web (parent_category: "Social")
+       - "Social Networks" (Twitter/Reddit alternatives, Mastodon)
+       - "Blogging & Publishing" (WordPress/Ghost/Medium alternatives)
+       - "Forum & Community" (Discord/Discourse alternatives)
+       - "Link-in-Bio & Personal Site" (Linktree alternatives, Portfolio, Bitly)
+
+    6. System & Privacy (parent_category: "System")
+       - "HomeLab & NAS" (Media Servers, Plex alternatives, Self-hosting dashboards)
+       - "Infrastructure & Cloud" (Terraform/Ansible alternatives, K8s)
+       - "Security & Passwords" (1Password/LastPass alternatives, Vaults)
+       - "VPN & Network" (Proxy, Firewall, Security)
+       - "Browser & Extensions" (Privacy browsers, Adblockers)
+       - "File Mgmt & Sharing" (Dropbox/WeTransfer alternatives)
+       - "OS & Utilities" (Linux tools, Terminal, PDF tools)
+    
+    [Output Fields]
+    For each tool, return:
+    1. "parent_category": The string code (e.g., "Dev", "Business").
+    2. "category": The EXACT subcategory name from the tree above (e.g., "Backend & Auth").
+    3. "tagline": A technical, SEO-optimized H1-style tagline (max 10 words). Focus on "Open source alternative to X". 
+    4. "long_summary": A high-converting 2-sentence pitch. 
+       - Sentence 1: Clearly state what it replaces (e.g., "A self-hosted alternative to Shopify"). 
+       - Sentence 2: Highlight the KILLER technical feature (e.g., "No transaction fees, wrote in Rust.").
+       - RULE: No marketing fluff. No adjectives like "powerful", "cutting-edge". Focus on technical limits and architecture.
+    5. "use_cases": Array of 3 specific personas (e.g. "Indie Hackers", "Enterprise Tech Teams"). 
+    6. "competitor_name": The single biggest SaaS competitor.
+    7. "comparison_table": Array of 3 comparison rows { "feature": "...", "os_value": "...", "saas_value": "..." }.
+    8. "best_for": Target Audience.
+    9. "pros": Array of 3 key benefits (Technical preferred).
+    10. "cons": Array of 3 honest drawbacks (e.g., "Complex setup", "No mobile app").
+    
+    [Hardcore Metadata]
+    11. "deployment_complexity": Integer 1-10 (1=Docker Run, 10=K8s Cluster required). Be realistic.
+    12. "tech_stack": String (e.g., "Node.js + React", "Go + Vue", "Python + Django"). Infer from description/repo.
+    13. "pricing_model": String (One of: "Fully Open Source", "Open Core", "Freemium").
+       - "Fully Open Source": All features free.
+       - "Open Core": Enterprise features paid.
+    14. "license_type": String (e.g., "MIT", "AGPL v3", "Apache 2.0", "BSL"). Infer best guess.
 
     Output strictly JSON. No markdown.
   `;
@@ -309,9 +337,11 @@ async function main() {
   // 1. 准备 SQL 语句
   const insertStmt = db.prepare(`
     INSERT OR REPLACE INTO tools (
-      slug, name, description, category, stars, logo, url, license, language, updated_at, forks, issues, rich_features_json
+      slug, name, description, category, parent_category, subcategory, stars, logo, url, license, language, updated_at, forks, issues, rich_features_json,
+      pricing_model, deployment_complexity, tech_stack, license_type
     ) VALUES (
-      @slug, @name, @description, @category, @stars, @logo, @url, @license, @language, @updated_at, @forks, @issues, @rich_features_json
+      @slug, @name, @description, @category, @parent_category, @subcategory, @stars, @logo, @url, @license, @language, @updated_at, @forks, @issues, @rich_features_json,
+      @pricing_model, @deployment_complexity, @tech_stack, @license_type
     )
   `);
 
@@ -328,7 +358,7 @@ async function main() {
   // 'incremental' (默认): 旧项目只更新 GitHub API 来源数据，不重跑 AI
   // 'full': 强制重跑所有项目的 AI 分析
   const UPDATE_MODE = process.env.UPDATE_MODE || "incremental";
-  console.log(`\n🛡️ Update Mode: ${UPDATE_MODE}`);
+  console.log(`\n🛡️ Update Mode: ${UPDATE_MODE} `);
 
   const uniqueItems = [];
   const seen = new Set();
@@ -408,7 +438,7 @@ async function main() {
   }
 
   console.log(
-    `\n📦 Total unique tools to analyze & insert: ${uniqueItems.length}`
+    `\n📦 Total unique tools to analyze & insert: ${uniqueItems.length} `
   );
 
   // 4. 批处理 AI + 入库
@@ -442,7 +472,16 @@ async function main() {
           slug: slug,
           name: item.name,
           description: aiData.tagline, // 用 tagline 覆盖默认描述
-          category: aiData.category,
+          category: aiData.category, // Legacy compatibility, using subcategory name
+          parent_category: aiData.parent_category,
+          subcategory: aiData.category, // AI returns 'category' as the exact subcategory string
+
+          // V5 Rich Metadata
+          pricing_model: aiData.pricing_model || "Fully Open Source",
+          deployment_complexity: aiData.deployment_complexity || 1,
+          tech_stack: aiData.tech_stack || "Unknown",
+          license_type: aiData.license_type || item.license?.name || "Unknown",
+
           stars: item.stargazers_count,
           logo: item.owner.avatar_url,
           url: item.homepage || item.html_url,

@@ -37,7 +37,9 @@ export type Tool = {
   slug: string;
   name: string;
   description: string;
-  category: string;
+  category: string; // Legacy/Display category
+  parent_category?: string; // New 2-level hierarchy
+  subcategory?: string; // New 2-level hierarchy
   stars: number;
   logo: string;
   url: string;
