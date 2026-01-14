@@ -127,7 +127,35 @@ export const TAXONOMY: TaxonomyType = {
             "File Mgmt & Sharing": { topics: ["file-sharing", "cloud-storage"], competitors: ["dropbox", "google-drive", "wetransfer"] },
             "OS & Utilities": { topics: ["linux", "terminal", "utilities", "pdf"], competitors: ["macos", "windows", "ubuntu"] }
         }
-    }
+    },
+    // 新增横向分类：Science（科学）
+    Science: {
+        label: 'Science',
+        icon: '🔬',
+        subcategories: [
+            "Physics & Astronomy", "Biology & Biotechnology", "Chemistry & Materials", "Mathematics & Statistics"
+        ],
+        searchMeta: {
+            "Physics & Astronomy": { topics: ["physics", "astronomy", "space"], competitors: ["nasa", "spacex", "esa"] },
+            "Biology & Biotechnology": { topics: ["biology", "biotech", "genomics"], competitors: ["thermo-fisher", "illumina", "10xgenomics"] },
+            "Chemistry & Materials": { topics: ["chemistry", "materials-science", "nanotech"], competitors: ["dow", "basf", "3m"] },
+            "Mathematics & Statistics": { topics: ["mathematics", "statistics", "data-science"], competitors: ["sas", "stata", "r-project"] }
+        }
+    },
+    // 新增横向分类：Health（健康）
+    Health: {
+        label: 'Health',
+        icon: '🏥',
+        subcategories: [
+            "Fitness & Wellness", "Medical Devices", "Pharma & Biotechnology", "Mental Health"
+        ],
+        searchMeta: {
+            "Fitness & Wellness": { topics: ["fitness", "wellness", "nutrition"], competitors: ["myfitnesspal", "fitbit", "strava"] },
+            "Medical Devices": { topics: ["medical-device", "healthtech"], competitors: ["medtronic", "philips", "siemens-healthineers"] },
+            "Pharma & Biotechnology": { topics: ["pharma", "biotech", "drug-discovery"], competitors: ["pfizer", "novartis", "gilead"] },
+            "Mental Health": { topics: ["mental-health", "therapy", "mindfulness"], competitors: ["betterhelp", "headspace", "talkspace"] }
+        }
+    },
 };
 
 // 转换为数组格式，供前端 UI 使用

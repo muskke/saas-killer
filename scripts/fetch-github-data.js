@@ -233,6 +233,18 @@ async function analyzeBatchWithAI(repos) {
        - "File Mgmt & Sharing" (Dropbox/WeTransfer alternatives)
        - "OS & Utilities" (Linux tools, Terminal, PDF tools)
     
+    7. Science (parent_category: "Science")
+       - "Physics & Astronomy" (physics, astronomy alternatives)
+       - "Biology & Biotechnology" (biology, biotech alternatives)
+       - "Chemistry & Materials" (chemistry, materials alternatives)
+       - "Mathematics & Statistics" (mathematics, statistics alternatives)
+
+    8. Health (parent_category: "Health")
+       - "Fitness & Wellness" (fitness, wellness alternatives)
+       - "Medical Devices" (medical device alternatives)
+       - "Pharma & Biotechnology" (pharma, biotech alternatives)
+       - "Mental Health" (mental health alternatives)
+
     [Output Fields]
     For each tool, return:
     1. "parent_category": The string code (e.g., "Dev", "Business").
