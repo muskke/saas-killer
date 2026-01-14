@@ -74,18 +74,18 @@ export default function ToolGrid({ tools, categories }: { tools: Tool[], categor
   };
 
   return (
-    <div className="max-w-7xl mx-auto px-4 py-12">
+    <div className="max-w-7xl mx-auto px-4 py-12 relative z-10">
 
       {/* 搜索与筛选栏 */}
       <div className="flex flex-col md:flex-row gap-6 mb-12 items-center justify-between">
 
         {/* 分类标签 (横向滚动) */}
-        <div className="flex gap-2 overflow-x-auto pb-2 w-full md:w-auto no-scrollbar mask-gradient">
+        <div className="flex gap-2 overflow-x-auto pb-2 w-full md:w-auto no-scrollbar">
           <button
             onClick={() => setActiveCategory('All')}
-            className={`px-4 py-2 rounded-full text-sm font-bold whitespace-nowrap transition-all ${activeCategory === 'All'
-                ? 'bg-indigo-600 text-white shadow-md'
-                : 'bg-white text-gray-600 border border-gray-200 hover:bg-gray-50'
+            className={`px-4 py-2 rounded-full text-sm font-bold whitespace-nowrap transition-all duration-200 ${activeCategory === 'All'
+              ? 'bg-indigo-600 text-white shadow-md'
+              : 'bg-white dark:bg-zinc-800 text-gray-600 dark:text-zinc-300 border border-gray-200 dark:border-zinc-700 hover:bg-gray-50 dark:hover:bg-zinc-700'
               }`}
           >
             All Tools
@@ -94,9 +94,9 @@ export default function ToolGrid({ tools, categories }: { tools: Tool[], categor
             <button
               key={cat}
               onClick={() => setActiveCategory(cat)}
-              className={`px-4 py-2 rounded-full text-sm font-bold whitespace-nowrap transition-all ${activeCategory === cat
-                  ? 'bg-indigo-600 text-white shadow-md'
-                  : 'bg-white text-gray-600 border border-gray-200 hover:bg-gray-50'
+              className={`px-4 py-2 rounded-full text-sm font-bold whitespace-nowrap transition-all duration-200 ${activeCategory === cat
+                ? 'bg-indigo-600 text-white shadow-md'
+                : 'bg-white dark:bg-zinc-800 text-gray-600 dark:text-zinc-300 border border-gray-200 dark:border-zinc-700 hover:bg-gray-50 dark:hover:bg-zinc-700'
                 }`}
             >
               {cat}
@@ -111,9 +111,9 @@ export default function ToolGrid({ tools, categories }: { tools: Tool[], categor
             placeholder="Search alternatives (e.g. Notion)..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full pl-11 pr-4 py-3 rounded-xl border border-gray-200 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition-all outline-none bg-white/50 backdrop-blur-sm"
+            className="w-full pl-11 pr-4 py-3 rounded-xl border border-gray-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-zinc-500 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 dark:focus:ring-indigo-500/30 transition-all outline-none"
           />
-          <Search className="absolute left-4 top-3.5 text-gray-400" size={18} />
+          <Search className="absolute left-4 top-3.5 text-gray-400 dark:text-zinc-500" size={18} />
         </div>
       </div>
 
@@ -123,15 +123,15 @@ export default function ToolGrid({ tools, categories }: { tools: Tool[], categor
       {filteredTools.length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
 
-          {/* 🔥 $$$ 强力插入：赞助商广告位 (The Money Maker) $$$ */}
-          <div className="group flex flex-col bg-gradient-to-br from-indigo-900 to-blue-800 rounded-xl p-6 shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1 border border-indigo-700 relative overflow-hidden">
+          {/* 赞助商广告位 */}
+          <div className="group flex flex-col bg-gradient-to-br from-indigo-600 to-purple-700 dark:from-indigo-900 dark:to-purple-900 rounded-2xl p-6 shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1 relative overflow-hidden">
             {/* 标签 */}
             <div className="absolute top-0 right-0 bg-yellow-400 text-yellow-900 text-xs font-bold px-3 py-1 rounded-bl-lg z-10">
               SPONSORED
             </div>
 
             <div className="flex items-center gap-3 mb-4 z-10">
-              <div className="w-12 h-12 rounded-xl bg-white flex items-center justify-center text-2xl">
+              <div className="w-12 h-12 rounded-xl bg-white flex items-center justify-center text-2xl shadow-md">
                 ☁️
               </div>
               <div>
@@ -141,63 +141,62 @@ export default function ToolGrid({ tools, categories }: { tools: Tool[], categor
             </div>
 
             <p className="text-indigo-100 text-sm mb-4 flex-grow z-10">
-              Don't just look at code—deploy it. Get <strong>$200 free credit</strong> to host any of these open-source tools instantly.
+              Don't just look at code—deploy it. Get <strong className="text-white">$200 free credit</strong> to host any of these open-source tools instantly.
             </p>
 
-            <a href="https://m.do.co/c/YOUR_AFFILIATE_CODE" target="_blank" className="mt-auto w-full bg-white text-indigo-900 font-bold py-2 rounded-lg text-center hover:bg-gray-100 transition-colors z-10">
-              Claim $200 Credit &rarr;
+            <a href="https://m.do.co/c/YOUR_AFFILIATE_CODE" target="_blank" className="mt-auto w-full bg-white text-indigo-700 font-bold py-2.5 rounded-lg text-center hover:bg-indigo-50 transition-colors z-10 flex items-center justify-center gap-2">
+              Claim $200 Credit
+              <ArrowRight size={16} />
             </a>
-
-            {/* 装饰背景 */}
-            <div className="absolute -bottom-4 -right-4 w-24 h-24 bg-white opacity-10 rounded-full blur-xl"></div>
           </div>
+
           {visibleTools.map((tool) => (
             <Link
               key={tool.slug}
               href={`/alternatives/${tool.slug}`}
-              className="group bg-white rounded-2xl border border-gray-100 p-6 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 relative overflow-hidden"
+              className="group bg-white dark:bg-zinc-900 rounded-2xl border border-gray-100 dark:border-zinc-800 p-6 hover:shadow-xl dark:hover:shadow-2xl hover:-translate-y-1 transition-all duration-300 relative overflow-hidden"
             >
               {/* 顶部标签 */}
               <div className="flex justify-between items-start mb-4">
-                <div className="w-12 h-12 rounded-xl bg-gray-50 border border-gray-100 flex items-center justify-center p-2 group-hover:scale-110 transition-transform">
+                <div className="w-12 h-12 rounded-xl bg-gray-50 dark:bg-zinc-800 border border-gray-100 dark:border-zinc-700 flex items-center justify-center p-2 group-hover:scale-110 transition-transform">
                   {tool.logo ? (
                     <Image src={tool.logo} alt={tool.name} width={48} height={48} className="w-full h-full object-contain" unoptimized />
                   ) : (
                     <span className="text-xl font-bold text-indigo-500">{tool.name.charAt(0)}</span>
                   )}
                 </div>
-                <div className="flex items-center gap-1 bg-amber-50 text-amber-600 px-2 py-1 rounded-lg text-xs font-bold">
+                <div className="flex items-center gap-1 bg-amber-50 dark:bg-amber-500/10 text-amber-600 dark:text-amber-400 px-2 py-1 rounded-lg text-xs font-bold">
                   <Star size={12} fill="currentColor" />
                   <span>{(tool.stars / 1000).toFixed(1)}k</span>
                 </div>
               </div>
 
               {/* 内容 */}
-              <h3 className="font-bold text-lg text-gray-900 mb-1 group-hover:text-indigo-600 transition-colors">
+              <h3 className="font-bold text-lg text-gray-900 dark:text-white mb-1 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
                 {tool.name}
               </h3>
-              <p className="text-sm text-gray-500 mb-4 line-clamp-2 h-10">
+              <p className="text-sm text-gray-500 dark:text-zinc-400 mb-4 line-clamp-2 h-10">
                 {tool.description || `Open source alternative to ${tool.rich_features?.competitor_name || 'proprietary software'}.`}
               </p>
 
               {/* 底部信息 */}
-              <div className="flex items-center justify-between pt-4 border-t border-gray-50">
+              <div className="flex items-center justify-between pt-4 border-t border-gray-100 dark:border-zinc-800">
                 <span className={`text-xs font-bold uppercase tracking-wider px-2 py-1 rounded border ${getCategoryColor(tool.category)}`}>
                   {tool.category || 'Tool'}
                 </span>
-                <span className="text-indigo-600 opacity-0 group-hover:opacity-100 transition-opacity transform translate-x-2 group-hover:translate-x-0 flex items-center gap-1 text-sm font-bold">
+                <span className="text-indigo-600 dark:text-indigo-400 opacity-0 group-hover:opacity-100 transition-opacity transform translate-x-2 group-hover:translate-x-0 flex items-center gap-1 text-sm font-bold">
                   View Analysis <ArrowRight size={14} />
                 </span>
               </div>
             </Link>
           ))}
 
-          {/* 🔥 新增：加载更多按钮 */}
+          {/* 加载更多按钮 */}
           {visibleTools.length < filteredTools.length && (
-            <div className="mt-12 text-center">
+            <div className="col-span-full mt-12 text-center">
               <button
                 onClick={handleLoadMore}
-                className="bg-white border border-gray-200 text-gray-900 font-bold py-3 px-8 rounded-full shadow-sm hover:bg-gray-50 hover:shadow-md transition-all active:scale-95"
+                className="bg-white dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700 text-gray-900 dark:text-white font-bold py-3 px-8 rounded-full shadow-sm hover:bg-gray-50 dark:hover:bg-zinc-700 hover:shadow-md transition-all active:scale-95"
               >
                 Load More Tools ({filteredTools.length - visibleTools.length} remaining)
               </button>
@@ -206,15 +205,15 @@ export default function ToolGrid({ tools, categories }: { tools: Tool[], categor
         </div>
       ) : (
         /* 空状态 Empty State */
-        <div className="text-center py-20">
-          <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-gray-100 mb-4 text-3xl">
+        <div className="text-center py-20 bg-gray-50 dark:bg-zinc-900 rounded-2xl border border-gray-100 dark:border-zinc-800">
+          <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-gray-100 dark:bg-zinc-800 mb-4 text-3xl">
             🤔
           </div>
-          <h3 className="text-xl font-bold text-gray-900">No tools found</h3>
-          <p className="text-gray-500 mt-2">Try searching for "Notion" or "Shopify"</p>
+          <h3 className="text-xl font-bold text-gray-900 dark:text-white">No tools found</h3>
+          <p className="text-gray-500 dark:text-zinc-400 mt-2">Try searching for "Notion" or "Shopify"</p>
           <button
             onClick={() => { setSearch(''); setActiveCategory('All'); }}
-            className="mt-6 text-indigo-600 font-bold hover:underline"
+            className="mt-6 text-indigo-600 dark:text-indigo-400 font-bold hover:underline"
           >
             Clear Filters
           </button>

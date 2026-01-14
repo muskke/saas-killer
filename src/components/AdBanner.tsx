@@ -314,21 +314,21 @@ export default function AdBanner({ category = "" }: { category?: string }) {
     <div className="relative group my-12 w-full transform transition-all hover:scale-[1.01]">
       {/* 1. 动态光晕背景 (Glow Effect) */}
       <div
-        className={`absolute -inset-0.5 rounded-2xl bg-gradient-to-r ${ad.gradient} opacity-75 blur transition duration-1000 group-hover:opacity-100 group-hover:duration-200 animate-tilt`}
+        className={`absolute -inset-0.5 rounded-2xl bg-gradient-to-r ${ad.gradient} opacity-50 dark:opacity-75 blur transition duration-1000 group-hover:opacity-80 dark:group-hover:opacity-100 group-hover:duration-200`}
       ></div>
 
-      {/* 2. 主卡片容器 */}
-      <div className="relative flex flex-col md:flex-row items-center justify-between gap-6 rounded-xl bg-gray-900 px-6 py-6 md:px-8 shadow-2xl overflow-hidden">
-        {/* 背景纹理 (Noise Texture) - 增加高级感 */}
+      {/* 2. 主卡片容器 - 主题自适应 */}
+      <div className="relative flex flex-col md:flex-row items-center justify-between gap-6 rounded-2xl bg-white dark:bg-zinc-900/90 backdrop-blur-md border border-gray-200 dark:border-white/10 px-6 py-6 md:px-8 shadow-xl dark:shadow-2xl overflow-hidden">
+        {/* 背景纹理 (Noise Texture) */}
         <div
-          className="absolute inset-0 opacity-[0.03] pointer-events-none"
+          className="absolute inset-0 opacity-[0.02] dark:opacity-[0.03] pointer-events-none"
           style={{
             backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E")`,
           }}
         ></div>
 
         {/* 标签 */}
-        <div className="absolute top-0 left-0 bg-white/10 backdrop-blur-md text-white/70 text-[10px] font-bold tracking-widest px-3 py-1 rounded-br-lg uppercase z-20 border-r border-b border-white/5">
+        <div className="absolute top-0 left-0 bg-indigo-100 dark:bg-white/10 backdrop-blur-md text-indigo-700 dark:text-white/70 text-[10px] font-bold tracking-widest px-3 py-1 rounded-br-lg uppercase z-20 border-r border-b border-indigo-200 dark:border-white/5">
           Recommended Tool
         </div>
 
@@ -338,7 +338,7 @@ export default function AdBanner({ category = "" }: { category?: string }) {
             e.preventDefault();
             setIsVisible(false);
           }}
-          className="absolute top-2 right-2 p-1 rounded-full text-gray-500 hover:text-white hover:bg-white/10 transition-all z-20"
+          className="absolute top-2 right-2 p-1 rounded-full text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-white/10 transition-all z-20"
         >
           <X size={14} />
         </button>
@@ -347,33 +347,33 @@ export default function AdBanner({ category = "" }: { category?: string }) {
         <div className="flex items-center gap-5 z-10 w-full md:w-auto relative">
           {/* Logo 容器 */}
           <div
-            className={`hidden md:flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br ${ad.gradient} text-white shadow-lg shadow-black/50 ring-1 ring-white/10`}
+            className={`hidden md:flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br ${ad.gradient} text-white shadow-lg ring-1 ring-black/5 dark:ring-white/10`}
           >
             <Icon size={32} strokeWidth={1.5} />
           </div>
 
           <div className="text-center md:text-left flex-1">
-            <h4 className="text-xl font-bold text-white flex items-center justify-center md:justify-start gap-2">
+            <h4 className="text-xl font-bold text-gray-900 dark:text-white flex items-center justify-center md:justify-start gap-2">
               {ad.title}
-              <span className="hidden md:inline-flex items-center rounded-md bg-white/10 px-2 py-0.5 text-xs font-medium text-white ring-1 ring-inset ring-white/20">
+              <span className="hidden md:inline-flex items-center rounded-md bg-indigo-100 dark:bg-white/10 px-2 py-0.5 text-xs font-medium text-indigo-700 dark:text-white ring-1 ring-inset ring-indigo-200 dark:ring-white/20">
                 {ad.name}
               </span>
             </h4>
-            <p className="text-sm text-gray-400 mt-2 max-w-lg font-medium leading-relaxed">
+            <p className="text-sm text-gray-600 dark:text-gray-400 mt-2 max-w-lg font-medium leading-relaxed">
               {ad.desc}
             </p>
           </div>
         </div>
 
-        {/* 右侧：行动按钮 (带流光特效) */}
+        {/* 右侧：行动按钮 */}
         <a
           href={trackableLink}
           target="_blank"
           rel="noopener noreferrer"
-          className="group/btn relative inline-flex items-center gap-2 overflow-hidden rounded-full bg-white px-8 py-3.5 text-sm font-bold text-gray-900 transition-all hover:bg-gray-50 hover:shadow-[0_0_20px_rgba(255,255,255,0.3)] w-full md:w-auto justify-center z-10"
+          className="group/btn relative inline-flex items-center gap-2 overflow-hidden rounded-full bg-indigo-600 dark:bg-white px-8 py-3.5 text-sm font-bold text-white dark:text-gray-900 transition-all hover:bg-indigo-700 dark:hover:bg-gray-50 hover:shadow-lg w-full md:w-auto justify-center z-10"
         >
           {/* 按钮内的流光动画 */}
-          <div className="absolute inset-0 -translate-x-[100%] group-hover/btn:translate-x-[100%] transition-transform duration-700 bg-gradient-to-r from-transparent via-black/5 to-transparent skew-x-12"></div>
+          <div className="absolute inset-0 -translate-x-[100%] group-hover/btn:translate-x-[100%] transition-transform duration-700 bg-gradient-to-r from-transparent via-white/20 dark:via-black/5 to-transparent skew-x-12"></div>
 
           <span className="relative">{ad.btnText}</span>
           <ArrowRight

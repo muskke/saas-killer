@@ -27,21 +27,50 @@ export default async function Home() {
   const categories = Array.from(new Set(allTools.map((t: Tool) => t.category))).filter(Boolean) as string[];
 
   return (
-    <main className="min-h-screen bg-gray-50 font-sans text-gray-900">
+    <main className="min-h-screen font-sans bg-gray-50 dark:bg-zinc-950 text-gray-900 dark:text-white transition-colors duration-300">
 
-      {/* Hero Section (保持不变，提升气场) */}
-      <section className="bg-indigo-900 text-white py-24 px-4 text-center relative overflow-hidden">
-        <div className="absolute inset-0 opacity-60 bg-cover bg-center" style={{ backgroundImage: "url('/hero-bg.png')" }}></div>
-        <div className="absolute inset-0 bg-gradient-to-b from-indigo-900/30 to-indigo-900/80"></div>
-        <div className="max-w-4xl mx-auto relative z-10">
-          <h1 className="text-5xl md:text-7xl font-black mb-6 tracking-tight">
-            Stop Paying <span className="text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 to-orange-500">SaaS Rent.</span>
+      {/* Hero Section - Theme Aware Premium Design */}
+      <section className="relative py-28 md:py-36 px-4 text-center overflow-hidden">
+        {/* Background Layer */}
+        <div className="absolute inset-0 z-0">
+          {/* Base background color */}
+          <div className="absolute inset-0 bg-slate-900 dark:bg-zinc-950"></div>
+
+          {/* Background Image with better visibility */}
+          <div className="absolute inset-0 bg-[url('/hero-bg.png')] bg-cover bg-center opacity-70 dark:opacity-50"></div>
+
+          {/* Light mode: subtle dark overlay for text contrast */}
+          <div className="absolute inset-0 bg-gradient-to-b from-slate-900/40 via-slate-900/60 to-slate-900/90 dark:from-zinc-950/30 dark:via-zinc-950/60 dark:to-zinc-950"></div>
+
+          {/* Dark mode glow orb effect */}
+          <div className="hidden dark:block absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[400px] bg-indigo-500/20 rounded-full blur-[100px] opacity-60"></div>
+        </div>
+
+        <div className="max-w-5xl mx-auto relative z-10">
+          {/* Badge */}
+          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/10 dark:bg-white/5 border border-white/20 dark:border-white/10 text-white text-sm font-medium mb-8 backdrop-blur-sm">
+            <span className="relative flex h-2 w-2">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
+            </span>
+            <span>The #1 Directory for Open Source Alternatives</span>
+          </div>
+
+          {/* Headline */}
+          <h1 className="text-5xl md:text-7xl lg:text-8xl font-black mb-8 tracking-tight leading-tight text-white drop-shadow-lg">
+            Stop Paying <br className="hidden md:block" />
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 via-orange-500 to-pink-500">SaaS Rent.</span>
           </h1>
-          <p className="text-xl text-indigo-200 max-w-2xl mx-auto">
-            The curated directory of <span className="text-white font-bold">Open Source Alternatives</span>.
-            <br />Privacy-focused. Self-hosted. No hidden fees.
+
+          {/* Subheadline */}
+          <p className="text-lg md:text-xl text-gray-300 dark:text-zinc-400 max-w-2xl mx-auto leading-relaxed mb-10">
+            The curated directory of <span className="text-white font-semibold">Open Source Alternatives</span>.
+            <br className="hidden md:block" /> Privacy-focused. Self-hosted. No hidden fees.
           </p>
         </div>
+
+        {/* Bottom gradient fade to content area */}
+        <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-gray-50 dark:from-zinc-950 to-transparent"></div>
       </section>
 
       {/* 2. Client Side Interaction (交互引擎) */}
@@ -51,7 +80,7 @@ export default async function Home() {
       <Newsletter />
 
       {/* Footer */}
-      <footer className="bg-white border-t border-gray-200 py-12 text-center text-gray-400 text-sm">
+      <footer className="border-t border-gray-200 dark:border-white/5 py-12 text-center text-gray-500 dark:text-zinc-500 text-sm bg-white dark:bg-zinc-950/50">
         <p>&copy; 2026 The Venture Tyrant. Data via GitHub API.</p>
       </footer>
 
