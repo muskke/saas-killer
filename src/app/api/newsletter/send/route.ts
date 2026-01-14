@@ -43,7 +43,8 @@ export async function POST(request: Request) {
             // `getTopTools` matches the current DB abstraction which is simple.
             // For this MVP, we will fetch top 50 and filter by ID in memory to avoid changing `db.ts` too much right now.
             const allTools = await getTopTools(50);
-            tools = allTools.filter((t: any) => toolIds.includes(t.id));
+            // toolIds passed from frontend are actually slugs now (see tools/route.ts)
+            tools = allTools.filter((t: any) => toolIds.includes(t.slug));
 
             // Maintain order of selection if possible, but basic filter is okay for now
         } else {

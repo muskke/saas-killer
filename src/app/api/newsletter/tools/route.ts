@@ -11,7 +11,7 @@ export async function GET() {
 
         return NextResponse.json({
             tools: tools.map((t: any) => ({
-                id: t.id,
+                id: t.slug, // Use slug as stable ID since 'id' might be missing
                 name: t.name,
                 stars: t.stars,
                 description: t.description,
