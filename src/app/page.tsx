@@ -71,10 +71,7 @@ export default async function Home() {
       <ToolGrid tools={sortedTools} />
       <Newsletter />
 
-      {/* Footer */}
-      <footer className="border-t border-gray-200 dark:border-white/5 py-12 text-center text-gray-500 dark:text-zinc-500 text-sm bg-white dark:bg-zinc-950/50">
-        <p>&copy; 2026 The Venture Tyrant. Data via GitHub API.</p>
-      </footer>
+
 
     </main>
   );

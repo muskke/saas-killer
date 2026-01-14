@@ -46,6 +46,8 @@ export const metadata: Metadata = {
   },
 };
 
+import Footer from "@/components/Footer";
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -54,12 +56,15 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased pt-16 transition-colors duration-300`}
+        className={`${geistSans.variable} ${geistMono.variable} antialiased pt-16 transition-colors duration-300 flex flex-col min-h-screen`}
         suppressHydrationWarning
       >
         <ThemeProvider defaultTheme="dark" storageKey="saas-killer-theme">
           <Navbar />
-          {children}
+          <div className="flex-grow bg-gray-50 dark:bg-zinc-950">
+            {children}
+          </div>
+          <Footer />
           <Analytics />
         </ThemeProvider>
       </body>

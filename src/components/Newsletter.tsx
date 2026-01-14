@@ -41,9 +41,9 @@ export default function Newsletter() {
   };
 
   return (
-    <section className="w-full max-w-2xl mx-auto my-24 px-4">
+    <section className="w-full max-w-2xl mx-auto my-8 px-4">
       {/* Container: Minimalist Bar */}
-      <div className="relative group rounded-xl border border-gray-200 dark:border-white/10 bg-white/50 dark:bg-zinc-900/50 backdrop-blur-sm overflow-hidden hover:border-indigo-500/30 transition-all duration-300">
+      <div className="relative group rounded-xl border border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-zinc-900 overflow-hidden hover:border-indigo-500/30 transition-all duration-300">
 
         {/* Subtle decorative glow on hover */}
         <div className="absolute inset-0 bg-gradient-to-r from-indigo-500/5 via-purple-500/5 to-pink-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
@@ -92,12 +92,6 @@ export default function Newsletter() {
             )}
           </div>
         </div>
-      </div>
-
-      {/* Footer minimal text */}
-      <div className="mt-4 flex justify-between px-2 text-[10px] text-gray-400 dark:text-zinc-600 font-mono uppercase tracking-wider opacity-60">
-        <span>No spam, strictly code.</span>
-        <span>Unsubscribe anytime.</span>
       </div>
     </section>
   );

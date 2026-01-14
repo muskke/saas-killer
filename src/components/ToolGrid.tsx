@@ -263,13 +263,13 @@ export default function ToolGrid({ tools }: { tools: Tool[] }) {
   const [search, setSearch] = useState('');
   const [activeParent, setActiveParent] = useState('All');
   const [activeSub, setActiveSub] = useState('All');
-  const [displayCount, setDisplayCount] = useState(24);
+  const [displayCount, setDisplayCount] = useState(23); // 23 + 1 赞助商卡片 = 24（3的倍数）
 
   // Reset subcategory when parent changes
   const handleParentChange = (pid: string) => {
     setActiveParent(pid);
     setActiveSub('All');
-    setDisplayCount(24);
+    setDisplayCount(23);
   };
 
   const filteredTools = useMemo(() => {
@@ -308,6 +308,13 @@ export default function ToolGrid({ tools }: { tools: Tool[] }) {
   // Get active subcategories for secondary nav
   const activePillar = TAXONOMY.find(t => t.id === activeParent);
   const visibleSubcategories = activePillar ? activePillar.subcategories : [];
+
+  // 🔄 Load More Logic - 点击加载更多
+  const hasMore = visibleTools.length < filteredTools.length;
+
+  const handleLoadMore = () => {
+    setDisplayCount(prev => prev + 12); // 每次加载12个，保持3的倍数
+  };
 
   // Category Colors - More vibrant
   const getCategoryTheme = (cat: string) => {
@@ -359,7 +366,7 @@ export default function ToolGrid({ tools }: { tools: Tool[] }) {
               onClick={() => handleParentChange(pillar.id)}
               className={`flex items-center gap-2 px-5 py-3 rounded-xl text-sm font-bold whitespace-nowrap transition-all duration-300 ${activeParent === pillar.id
                 ? 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-lg shadow-indigo-500/30 scale-105 border-transparent'
-                : 'bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 text-gray-600 dark:text-gray-400 hover:border-indigo-300 dark:hover:border-indigo-500/30 hover:text-indigo-600 dark:hover:text-indigo-400'
+                : 'bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 text-gray-600 dark:text-gray-400 hover:border-indigo-300 dark:hover:border-indigo-500/30 hover:text-indigo-600 dark:hover:text-indigo-400 hover:shadow-sm'
                 }`}
             >
               <span>{pillar.icon}</span>
@@ -406,18 +413,33 @@ export default function ToolGrid({ tools }: { tools: Tool[] }) {
             <ToolCard key={tool.slug} tool={tool} categoryColor={getCategoryTheme(tool.category)} index={index} />
           ))}
 
-          {visibleTools.length < filteredTools.length && (
-            <div className="col-span-full pt-12 flex justify-center">
+          {/* 🔄 点击加载更多 */}
+          {hasMore && (
+            <div className="col-span-full pt-4 flex items-center justify-center gap-4">
+              {/* 左侧装饰线 */}
+              <div className="flex-1 max-w-[100px] h-px bg-gradient-to-r from-transparent to-gray-200 dark:to-zinc-800" />
+
               <button
-                onClick={() => setDisplayCount(prev => prev + 24)}
-                className="group relative px-8 py-4 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-full font-bold text-gray-600 dark:text-gray-300 hover:text-white transition-all active:scale-95 overflow-hidden"
+                onClick={handleLoadMore}
+                className="group relative inline-flex items-center gap-2 px-6 py-2.5 text-sm font-medium text-gray-500 dark:text-zinc-400 bg-white/50 dark:bg-zinc-900/50 hover:bg-white dark:hover:bg-zinc-800 border border-transparent hover:border-indigo-100 dark:hover:border-zinc-700 rounded-full transition-all duration-500 hover:shadow-lg hover:shadow-indigo-500/10 hover:text-indigo-600 dark:hover:text-indigo-400 active:scale-95"
               >
-                {/* Button Hover Fill */}
-                <div className="absolute inset-0 bg-gradient-to-r from-indigo-500 to-purple-600 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                <span className="relative flex items-center gap-2">
-                  Load More Alternatives <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform" />
+                <div className="absolute inset-0 bg-gradient-to-r from-indigo-500/5 to-purple-500/5 opacity-0 group-hover:opacity-100 rounded-full transition-opacity duration-500" />
+                <span className="relative">Show more</span>
+                <span className="relative flex items-center justify-center min-w-[20px] h-5 bg-gray-100 dark:bg-zinc-800 text-[10px] rounded-full px-1.5 group-hover:bg-indigo-100 dark:group-hover:bg-indigo-900/30 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
+                  {filteredTools.length - visibleTools.length}
                 </span>
+                <svg
+                  className="relative w-4 h-4 text-gray-400 group-hover:text-indigo-500 group-hover:translate-y-0.5 transition-all duration-300"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 9l-7 7-7-7" />
+                </svg>
               </button>
+
+              {/* 右侧装饰线 */}
+              <div className="flex-1 max-w-[100px] h-px bg-gradient-to-l from-transparent to-gray-200 dark:to-zinc-800" />
             </div>
           )}
         </div>
