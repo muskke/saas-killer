@@ -9,152 +9,356 @@ import {
     Preview,
     Section,
     Text,
-    Tailwind,
     Hr,
 } from '@react-email/components';
 import * as React from 'react';
 
+// 简化的工具类型 (用于邮件展示)
+export interface HotTool {
+    name: string;
+    description: string;
+    stars: string;
+    category: string;
+    url: string;
+}
+
 interface WelcomeEmailProps {
     email?: string;
+    hotTools?: HotTool[];
+}
+
+// 默认工具数据 (仅作为 fallback)
+const defaultHotTools: HotTool[] = [
+    {
+        name: 'Cal.com',
+        description: 'Calendly 的开源替代品',
+        stars: '32k',
+        category: 'Scheduling',
+        url: 'https://cal.com'
+    },
+    {
+        name: 'Appwrite',
+        description: 'Firebase 的开源替代品',
+        stars: '44k',
+        category: 'BaaS',
+        url: 'https://appwrite.io'
+    },
+    {
+        name: 'Documenso',
+        description: 'DocuSign 的开源替代品',
+        stars: '8k',
+        category: 'E-Signature',
+        url: 'https://documenso.com'
+    }
+];
+
+// 格式化星星数 (如 45000 -> "45k")
+function formatStars(stars: number | string): string {
+    const num = typeof stars === 'string' ? parseInt(stars, 10) : stars;
+    if (isNaN(num)) return String(stars);
+    if (num >= 1000) {
+        return (num / 1000).toFixed(1).replace(/\.0$/, '') + 'k';
+    }
+    return String(num);
 }
 
 export const WelcomeEmail = ({
     email = 'subscriber@example.com',
+    hotTools = defaultHotTools,
 }: WelcomeEmailProps) => {
-    const previewText = `Welcome to the dark side. 🚀`;
-
-    // Production URL (fallback to localhost for dev)
+    const previewText = `🚀 Welcome to SaaS Killer - Your weekly dose of open-source gems`;
     const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://saas-killer.chaos-meme.cn';
 
     return (
         <Html>
             <Head />
             <Preview>{previewText}</Preview>
-            <Body style={main} className="bg-black my-auto mx-auto font-sans text-gray-200">
-                <Container style={container} className="border border-solid border-white/10 rounded-2xl my-[40px] mx-auto p-[20px] max-w-[465px] bg-[#09090b]">
-                    <Section className="mt-[24px]">
-                        <div className="flex items-center gap-2">
-                            <Heading style={logo} as="h1">SaaS Killer</Heading>
-                        </div>
+            <Body style={main}>
+                <Container style={container}>
+                    {/* Header with Logo */}
+                    <Section style={headerSection}>
+                        <table width="100%">
+                            <tr>
+                                <td>
+                                    <Text style={logoText}>
+                                        <span style={{ color: '#818cf8' }}>SaaS</span>
+                                        <span style={{ color: '#c084fc' }}>Killer</span>
+                                    </Text>
+                                </td>
+                                <td align="right">
+                                    <Text style={badgeStyle}>🔥 NEW MEMBER</Text>
+                                </td>
+                            </tr>
+                        </table>
                     </Section>
 
-                    <Heading style={heading} className="text-white text-[24px] font-bold text-center p-0 my-[30px] mx-0">
-                        Welcome to the <span style={{ color: '#818cf8' }}>Club</span>.
-                    </Heading>
+                    {/* Hero Section */}
+                    <Section style={heroSection}>
+                        <Heading style={heroHeading}>
+                            Welcome to the <span style={{ color: '#818cf8' }}>Club</span>. 🎉
+                        </Heading>
+                        <Text style={heroText}>
+                            You've just joined <strong style={{ color: '#fff' }}>5,000+ developers</strong> who refuse to pay for overpriced SaaS.
+                            <br />
+                            We curate the best open-source alternatives, so you don't have to.
+                        </Text>
+                    </Section>
 
-                    <Text style={text} className="text-gray-300 text-[14px] leading-[24px]">
-                        Hello there,
-                    </Text>
-
-                    <Text style={text} className="text-gray-300 text-[14px] leading-[24px]">
-                        You've just joined <strong>5,000+ developers</strong> who are tired of monthly subscriptions. We find the best open-source alternatives so you don't have to.
-                    </Text>
-
-                    <Section className="text-center mt-[32px] mb-[32px]">
-                        <Button
-                            style={button}
-                            className="bg-indigo-600 rounded-lg text-white text-[12px] font-semibold no-underline text-center px-6 py-4 shadow-[0_0_20px_rgba(79,70,229,0.4)]"
-                            href={baseUrl}
-                        >
-                            Explore Hidden Gems
+                    {/* CTA Button */}
+                    <Section style={{ textAlign: 'center', marginTop: '24px', marginBottom: '32px' }}>
+                        <Button style={ctaButton} href={baseUrl}>
+                            🔍 Explore 200+ Tools
                         </Button>
                     </Section>
 
-                    <Text style={text} className="text-gray-300 text-[14px] leading-[24px]">
-                        Every week, we'll drop a fresh batch of tools straight to your inbox.
-                        <br />
-                        No fluff. No spam. Just code.
-                    </Text>
+                    <Hr style={divider} />
 
-                    <Hr style={hr} className="border-white/10 my-[26px] mx-0 w-full" />
+                    {/* Hot Tools Section - 动态数据 */}
+                    <Section style={toolsSection}>
+                        <Heading style={sectionHeading}>
+                            🔥 This Week's Hot Picks
+                        </Heading>
 
-                    <Text style={footer} className="text-[#666666] text-[12px] leading-[24px]">
-                        Happy hacking,
-                        <br />
-                        The SaaS Killer Team
-                    </Text>
-                </Container>
+                        {hotTools.map((tool, index) => (
+                            <Link key={index} href={tool.url} style={{ textDecoration: 'none' }}>
+                                <Section style={toolCard}>
+                                    <table width="100%">
+                                        <tr>
+                                            <td style={{ verticalAlign: 'top' }}>
+                                                <Text style={toolName}>{tool.name}</Text>
+                                                <Text style={toolDescription}>{tool.description}</Text>
+                                            </td>
+                                            <td align="right" style={{ verticalAlign: 'middle' }}>
+                                                <Text style={toolMeta}>⭐ {tool.stars}</Text>
+                                                <Text style={toolCategory}>{tool.category}</Text>
+                                            </td>
+                                        </tr>
+                                    </table>
+                                </Section>
+                            </Link>
+                        ))}
+                    </Section>
 
-                <Container className="mx-auto text-center">
-                    <Text style={footerLinks} className="text-[#444] text-[10px] leading-[24px]">
-                        {/* Physical Address Placeholder */}
-                        123 Open Source Ave, Tech City, TC 90210
-                        <br />
-                        <Link href={`${baseUrl}/unsubscribe?email=${email}`} style={{ color: '#666666', textDecoration: 'underline' }} className="text-[#666] underline hover:text-gray-400">
-                            Unsubscribe
-                        </Link>
-                    </Text>
+                    <Hr style={divider} />
+
+                    {/* What to Expect */}
+                    <Section style={{ padding: '0 20px' }}>
+                        <Heading style={sectionHeading}>
+                            📬 What You'll Get
+                        </Heading>
+                        <Text style={listItem}>✅ Weekly curated open-source tools</Text>
+                        <Text style={listItem}>✅ Early access to new discoveries</Text>
+                        <Text style={listItem}>✅ Zero spam, pure value</Text>
+                    </Section>
+
+                    <Hr style={divider} />
+
+                    {/* Social Links */}
+                    <Section style={socialSection}>
+                        <Text style={socialText}>Join the community:</Text>
+                        <table width="100%">
+                            <tr>
+                                <td align="center">
+                                    <Link href="https://github.com/muskke/saas-killer" style={socialLink}>
+                                        ⭐ Star on GitHub
+                                    </Link>
+                                    <span style={{ color: '#444', margin: '0 12px' }}>|</span>
+                                    <Link href="https://twitter.com/saaskiller" style={socialLink}>
+                                        🐦 Follow on X
+                                    </Link>
+                                </td>
+                            </tr>
+                        </table>
+                    </Section>
+
+                    {/* Footer */}
+                    <Section style={footerSection}>
+                        <Text style={footerText}>
+                            Happy hacking! 🚀
+                            <br />
+                            — The SaaS Killer Team
+                        </Text>
+                        <Text style={footerLinksStyle}>
+                            <Link href={`${baseUrl}/unsubscribe?email=${email}`} style={unsubLink}>
+                                Unsubscribe
+                            </Link>
+                        </Text>
+                    </Section>
                 </Container>
             </Body>
         </Html>
     );
 };
 
-// Styles for email clients that strip classes (like QQ Mail)
+// ============ STYLES ============
+
 const main = {
-    backgroundColor: '#000000',
-    fontFamily: '-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Oxygen-Sans,Ubuntu,Cantarell,"Helvetica Neue",sans-serif',
+    backgroundColor: '#0a0a0a',
+    fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Ubuntu, sans-serif',
 };
 
 const container = {
     margin: '0 auto',
-    padding: '20px 0 48px',
-    width: '580px',
-    maxWidth: '100%',
-    backgroundColor: '#09090b',
-    border: '1px solid #333',
-    borderRadius: '12px',
-    paddingLeft: '20px',
-    paddingRight: '20px',
+    padding: '40px 0',
+    maxWidth: '600px',
 };
 
-const logo = {
+const headerSection = {
+    padding: '20px 24px',
+    backgroundColor: '#111',
+    borderRadius: '12px 12px 0 0',
+    borderBottom: '1px solid #222',
+};
+
+const logoText = {
     fontSize: '24px',
     fontWeight: '900',
-    color: '#818cf8', // Indigo-400
     margin: '0',
 };
 
-const heading = {
-    fontSize: '32px',
-    lineHeight: '1.3',
+const badgeStyle = {
+    backgroundColor: '#312e81',
+    color: '#a5b4fc',
+    padding: '4px 12px',
+    borderRadius: '20px',
+    fontSize: '11px',
+    fontWeight: '600',
+    margin: '0',
+};
+
+const heroSection = {
+    padding: '32px 24px',
+    backgroundColor: '#111',
+    textAlign: 'center' as const,
+};
+
+const heroHeading = {
+    fontSize: '28px',
     fontWeight: '700',
     color: '#ffffff',
+    margin: '0 0 16px 0',
+    lineHeight: '1.3',
 };
 
-const text = {
+const heroText = {
     fontSize: '16px',
     lineHeight: '26px',
-    color: '#d1d5db', // gray-300
+    color: '#a1a1aa',
+    margin: '0',
 };
 
-const button = {
-    backgroundColor: '#5e6ad2',
+const ctaButton = {
+    backgroundColor: '#6366f1',
+    color: '#ffffff',
+    padding: '14px 28px',
     borderRadius: '8px',
-    color: '#fff',
-    fontSize: '16px',
-    fontWeight: 'bold',
+    fontSize: '15px',
+    fontWeight: '600',
     textDecoration: 'none',
-    textAlign: 'center' as const,
     display: 'inline-block',
-    padding: '12px 24px',
 };
 
-const hr = {
-    borderColor: '#333',
-    margin: '20px 0',
-    borderTop: '1px solid #333'
+const divider = {
+    borderColor: '#222',
+    margin: '0',
 };
 
-const footer = {
-    color: '#8898aa',
-    fontSize: '12px',
+const toolsSection = {
+    padding: '24px',
+    backgroundColor: '#111',
 };
 
-const footerLinks = {
-    color: '#8898aa',
-    fontSize: '12px',
+const sectionHeading = {
+    fontSize: '18px',
+    fontWeight: '600',
+    color: '#ffffff',
+    margin: '0 0 16px 0',
+};
+
+const toolCard = {
+    backgroundColor: '#1a1a1a',
+    border: '1px solid #2a2a2a',
+    borderRadius: '8px',
+    padding: '16px',
+    marginBottom: '12px',
+};
+
+const toolName = {
+    fontSize: '16px',
+    fontWeight: '600',
+    color: '#fff',
+    margin: '0 0 4px 0',
+};
+
+const toolDescription = {
+    fontSize: '13px',
+    color: '#71717a',
+    margin: '0',
+};
+
+const toolMeta = {
+    fontSize: '13px',
+    color: '#fbbf24',
+    margin: '0 0 4px 0',
+    textAlign: 'right' as const,
+};
+
+const toolCategory = {
+    fontSize: '11px',
+    color: '#6366f1',
+    backgroundColor: '#1e1b4b',
+    padding: '2px 8px',
+    borderRadius: '4px',
+    margin: '0',
+    display: 'inline-block',
+};
+
+const listItem = {
+    fontSize: '14px',
+    color: '#d4d4d8',
+    margin: '8px 0',
+};
+
+const socialSection = {
+    padding: '24px',
+    backgroundColor: '#111',
     textAlign: 'center' as const,
+};
+
+const socialText = {
+    fontSize: '13px',
+    color: '#71717a',
+    margin: '0 0 12px 0',
+};
+
+const socialLink = {
+    fontSize: '13px',
+    color: '#a5b4fc',
+    textDecoration: 'none',
+};
+
+const footerSection = {
+    padding: '24px',
+    backgroundColor: '#111',
+    borderRadius: '0 0 12px 12px',
+    textAlign: 'center' as const,
+};
+
+const footerText = {
+    fontSize: '14px',
+    color: '#71717a',
+    margin: '0 0 16px 0',
+};
+
+const footerLinksStyle = {
+    fontSize: '12px',
+    color: '#52525b',
+    margin: '0',
+};
+
+const unsubLink = {
+    color: '#52525b',
+    textDecoration: 'underline',
 };
 
 export default WelcomeEmail;

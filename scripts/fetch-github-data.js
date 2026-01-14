@@ -335,13 +335,15 @@ async function main() {
 
   // 预编译查询语句，速度更快
   const checkStmt = db.prepare(
-    "SELECT rich_features_json FROM tools WHERE slug = ?"
+    "SELECT rich_features_json, stars FROM tools WHERE slug = ?"
   );
 
   // 预编译更新基础数据的 SQL (所有 GitHub 可直接获取的字段，不涉及 AI 生成字段)
+  // 🔥 关键改动：在更新 stars 之前，先把旧值存到 stars_prev
   const updateStatsStmt = db.prepare(`
     UPDATE tools 
-    SET stars = @stars, 
+    SET stars_prev = stars,
+        stars = @stars, 
         forks = @forks, 
         issues = @issues, 
         updated_at = @updated_at,

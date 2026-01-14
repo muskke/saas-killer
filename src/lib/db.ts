@@ -88,3 +88,27 @@ export async function getToolBySlug(slug: string): Promise<Tool | null> {
   };
 }
 
+// 获取热门工具 (邮件推荐用) - 🔥 按本周星星增长排序
+export async function getTopTools(limit: number = 3): Promise<Tool[]> {
+  const database = getDb();
+
+  // stars - stars_prev = 本周增长量
+  // COALESCE 处理 stars_prev 可能为 NULL 的情况
+  const rows = database
+    .prepare(
+      `
+    SELECT *, (stars - COALESCE(stars_prev, 0)) AS star_growth 
+    FROM tools 
+    WHERE stars > stars_prev
+    ORDER BY star_growth DESC
+    LIMIT ?
+  `
+    )
+    .all(limit) as ToolRow[];
+
+  return rows.map((row) => ({
+    ...row,
+    rich_features: JSON.parse(row.rich_features_json || "{}") as RichFeatures,
+  }));
+}
+

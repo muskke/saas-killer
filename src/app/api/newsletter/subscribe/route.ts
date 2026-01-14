@@ -1,6 +1,15 @@
 import { NextResponse } from 'next/server';
 import { resend, MARKETING_EMAILS } from '@/lib/resend';
-import WelcomeEmail from '@/emails/WelcomeEmail';
+import { getTopTools } from '@/lib/db';
+import WelcomeEmail, { HotTool } from '@/emails/WelcomeEmail';
+
+// 格式化星星数 (如 45000 -> "45k")
+function formatStars(stars: number): string {
+    if (stars >= 1000) {
+        return (stars / 1000).toFixed(1).replace(/\.0$/, '') + 'k';
+    }
+    return String(stars);
+}
 
 export async function POST(request: Request) {
     try {
@@ -26,13 +35,33 @@ export async function POST(request: Request) {
             }
         }
 
-        // 2. Send Welcome Email
+        // 2. 获取实时热门工具数据
+        let hotTools: HotTool[] = [];
+        try {
+            const tools = await getTopTools(3);
+            hotTools = tools.map(tool => ({
+                name: tool.name,
+                description: tool.rich_features?.competitor_name
+                    ? `${tool.rich_features.competitor_name} 的开源替代品`
+                    : tool.description.slice(0, 50) + (tool.description.length > 50 ? '...' : ''),
+                stars: formatStars(tool.stars),
+                category: tool.category,
+                url: tool.url
+            }));
+        } catch (e) {
+            console.error('Failed to fetch top tools:', e);
+            // Will use default tools in email template if this fails
+        }
+
+        // 3. Send Welcome Email with dynamic data
         const { data, error } = await resend.emails.send({
             from: MARKETING_EMAILS.welcome.from,
             to: email,
             subject: MARKETING_EMAILS.welcome.subject,
-            react: WelcomeEmail({ email }),
-            // headers: { 'List-Unsubscribe': ... } // Resend handles this if using Audiences or can be added manually
+            react: WelcomeEmail({
+                email,
+                hotTools: hotTools.length > 0 ? hotTools : undefined // Use default if fetch failed
+            }),
         });
 
         if (error) {
