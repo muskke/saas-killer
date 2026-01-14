@@ -339,7 +339,7 @@ export default function ToolGrid({ tools }: { tools: Tool[] }) {
         </div>
 
         {/* 🏆 Primary Navigation (Pillars) - Scrollable on Mobile */}
-        <div className="flex overflow-x-auto pb-4 gap-3 md:justify-center scrollbar-hide -mx-4 px-4 md:mx-0">
+        <div className="flex overflow-x-auto gap-2 md:gap-3 md:justify-center -mx-4 px-4 md:mx-0 scrollbar-hide" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
           <button
             onClick={() => handleParentChange('All')}
             className={`flex items-center gap-2 px-5 py-3 rounded-xl text-sm font-bold whitespace-nowrap transition-all duration-300 ${activeParent === 'All'
