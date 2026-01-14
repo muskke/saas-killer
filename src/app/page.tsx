@@ -29,48 +29,38 @@ export default async function Home() {
   return (
     <main className="min-h-screen font-sans bg-gray-50 dark:bg-zinc-950 text-gray-900 dark:text-white transition-colors duration-300">
 
-      {/* Hero Section - Theme Aware Premium Design */}
-      <section className="relative py-28 md:py-36 px-4 text-center overflow-hidden">
+      {/* Hero Section - Compact Premium Design */}
+      <section className="relative py-16 md:py-24 px-4 text-center overflow-hidden">
         {/* Background Layer */}
         <div className="absolute inset-0 z-0">
-          {/* Base background color */}
           <div className="absolute inset-0 bg-slate-900 dark:bg-zinc-950"></div>
-
-          {/* Background Image with better visibility */}
           <div className="absolute inset-0 bg-[url('/hero-bg.png')] bg-cover bg-center opacity-70 dark:opacity-50"></div>
-
-          {/* Light mode: subtle dark overlay for text contrast */}
           <div className="absolute inset-0 bg-gradient-to-b from-slate-900/40 via-slate-900/60 to-slate-900/90 dark:from-zinc-950/30 dark:via-zinc-950/60 dark:to-zinc-950"></div>
-
-          {/* Dark mode glow orb effect */}
           <div className="hidden dark:block absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[400px] bg-indigo-500/20 rounded-full blur-[100px] opacity-60"></div>
         </div>
 
-        <div className="max-w-5xl mx-auto relative z-10">
-          {/* Badge */}
-          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/10 dark:bg-white/5 border border-white/20 dark:border-white/10 text-white text-sm font-medium mb-8 backdrop-blur-sm">
-            <span className="relative flex h-2 w-2">
+        <div className="max-w-4xl mx-auto relative z-10">
+          {/* Badge - 更精简 */}
+          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/10 border border-white/20 text-white/90 text-xs font-medium mb-6 backdrop-blur-sm">
+            <span className="relative flex h-1.5 w-1.5">
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
+              <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-green-500"></span>
             </span>
-            <span>The #1 Directory for Open Source Alternatives</span>
+            <span>Open Source Alternatives Directory</span>
           </div>
 
-          {/* Headline */}
-          <h1 className="text-5xl md:text-7xl lg:text-8xl font-black mb-8 tracking-tight leading-tight text-white drop-shadow-lg">
-            Stop Paying <br className="hidden md:block" />
+          {/* Headline - 字号略微缩小 */}
+          <h1 className="text-4xl md:text-6xl lg:text-7xl font-black mb-4 tracking-tight leading-tight text-white drop-shadow-lg">
+            Stop Paying{' '}
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 via-orange-500 to-pink-500">SaaS Rent.</span>
           </h1>
 
-          {/* Subheadline */}
-          <p className="text-lg md:text-xl text-gray-300 dark:text-zinc-400 max-w-2xl mx-auto leading-relaxed mb-10">
-            The curated directory of <span className="text-white font-semibold">Open Source Alternatives</span>.
-            <br className="hidden md:block" /> Privacy-focused. Self-hosted. No hidden fees.
+          {/* Subheadline - 间距减少 */}
+          <p className="text-base md:text-lg text-gray-300 dark:text-zinc-400 max-w-xl mx-auto leading-relaxed">
+            Curated directory of <span className="text-white font-semibold">Open Source Alternatives</span>.
+            Privacy-focused. Self-hosted. No hidden fees.
           </p>
         </div>
-
-        {/* Bottom gradient fade to content area */}
-        <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-gray-50 dark:from-zinc-950 to-transparent"></div>
       </section>
 
       {/* 2. Client Side Interaction (交互引擎) */}
