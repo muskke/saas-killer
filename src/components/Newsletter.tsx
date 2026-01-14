@@ -7,8 +7,8 @@ export default function Newsletter() {
   const [email, setEmail] = useState('');
   const [status, setStatus] = useState<'idle' | 'submitting' | 'success'>('idle');
 
-  // 🔥 Replace with your Formspree URL
-  const FORMSPREE_URL = "https://formspree.io/f/mykkzgkr";
+  // 🚀 Internal API Route (Resend)
+  const SUBSCRIBE_API = "/api/newsletter/subscribe";
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -17,24 +17,25 @@ export default function Newsletter() {
     setStatus('submitting');
 
     try {
-      const response = await fetch(FORMSPREE_URL, {
+      const response = await fetch(SUBSCRIBE_API, {
         method: 'POST',
         body: JSON.stringify({ email }),
         headers: {
-          'Accept': 'application/json',
           'Content-Type': 'application/json'
         },
       });
+
+      const data = await response.json();
 
       if (response.ok) {
         setStatus('success');
         setEmail('');
       } else {
-        alert("Something went wrong. Please try again.");
+        alert(data.error || "Something went wrong. Please try again.");
         setStatus('idle');
       }
     } catch (error) {
-      alert("Error submitting form.");
+      alert("Network Error");
       setStatus('idle');
     }
   };
