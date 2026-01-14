@@ -1,31 +1,112 @@
 'use client';
 
-import { useState } from 'react';
-import { Send, Lock, Eye, CheckCircle, AlertCircle } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Send, Lock, Eye, CheckCircle, AlertCircle, RefreshCw, X } from 'lucide-react';
+
+interface Tool {
+    id: string;
+    name: string;
+    description: string;
+    stars: number;
+    category: string;
+}
 
 export default function AdminNewsletterPage() {
     const [secret, setSecret] = useState('');
     const [isAuthenticated, setIsAuthenticated] = useState(false);
 
+    // Form State
     const [subject, setSubject] = useState('');
-    const [content, setContent] = useState('');
+    const [introText, setIntroText] = useState('');
+    const [outroText, setOutroText] = useState('');
     const [testEmail, setTestEmail] = useState('');
-    const [status, setStatus] = useState<'idle' | 'sending' | 'success' | 'error'>('idle');
+
+    // Tools State
+    const [availableTools, setAvailableTools] = useState<Tool[]>([]);
+    const [selectedToolIds, setSelectedToolIds] = useState<string[]>([]);
+    const [isLoadingTools, setIsLoadingTools] = useState(false);
+
+    // Status State
+    const [status, setStatus] = useState<'idle' | 'sending' | 'success' | 'error' | 'previewing'>('idle');
     const [logs, setLogs] = useState<string[]>([]);
+    const [previewHtml, setPreviewHtml] = useState<string | null>(null);
+
+    // Data Fetching
+    useEffect(() => {
+        if (isAuthenticated) {
+            fetchTools();
+        }
+    }, [isAuthenticated]);
+
+    const fetchTools = async () => {
+        setIsLoadingTools(true);
+        try {
+            const res = await fetch('/api/newsletter/tools');
+            const data = await res.json();
+            if (data.tools) {
+                setAvailableTools(data.tools);
+                // Pre-select top 5 by default
+                setSelectedToolIds(data.tools.slice(0, 5).map((t: Tool) => t.id));
+            }
+        } catch (e) {
+            console.error(e);
+            addLog('Failed to fetch tools', true);
+        } finally {
+            setIsLoadingTools(false);
+        }
+    };
+
+    const addLog = (msg: string, isError = false) => {
+        setLogs(prev => [`[${new Date().toLocaleTimeString()}] ${isError ? '❌ ' : ''}${msg}`, ...prev]);
+    };
 
     const handleLogin = (e: React.FormEvent) => {
         e.preventDefault();
-        // In a real app, verify against API, but for this simple MVP we just gate the UI locally
-        // The real check happens on the server API route
         if (secret) setIsAuthenticated(true);
+    };
+
+    const handlePreview = async () => {
+        setStatus('previewing');
+        setPreviewHtml(null);
+        addLog('Generating preview...');
+
+        try {
+            const res = await fetch('/api/newsletter/send', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    subject, // Optional for preview but good to pass
+                    secret,
+                    introText,
+                    outroText,
+                    toolIds: selectedToolIds,
+                    preview: true
+                }),
+            });
+            const data = await res.json();
+            if (data.success && data.html) {
+                setPreviewHtml(data.html);
+                addLog('Preview generated.');
+                setStatus('idle');
+            } else {
+                addLog(`Preview failed: ${data.error}`, true);
+                setStatus('error');
+            }
+        } catch (e) {
+            addLog('Network error during preview', true);
+            setStatus('error');
+        }
     };
 
     const handleSend = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!subject || !content) return;
+        if (!subject) {
+            addLog('Subject is required', true);
+            return;
+        }
 
         setStatus('sending');
-        setLogs(prev => [`[${new Date().toLocaleTimeString()}] Starting broadcast...`, ...prev]);
+        addLog('Starting transmission...');
 
         try {
             const res = await fetch('/api/newsletter/send', {
@@ -33,8 +114,10 @@ export default function AdminNewsletterPage() {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     subject,
-                    content, // In real app, this should be HTML. We'll send raw string for now
                     secret,
+                    introText,
+                    outroText,
+                    toolIds: selectedToolIds,
                     testEmail: testEmail || undefined
                 }),
             });
@@ -43,15 +126,21 @@ export default function AdminNewsletterPage() {
 
             if (res.ok) {
                 setStatus('success');
-                setLogs(prev => [`[${new Date().toLocaleTimeString()}] ✅ Sent successfully to ${data.count} recipients.`, ...prev]);
+                addLog(`✅ Sent successfully to ${data.count} recipients.`);
             } else {
                 setStatus('error');
-                setLogs(prev => [`[${new Date().toLocaleTimeString()}] ❌ Error: ${data.error}`, ...prev]);
+                addLog(`Error: ${data.error}`, true);
             }
         } catch (err) {
             setStatus('error');
-            setLogs(prev => [`[${new Date().toLocaleTimeString()}] ❌ Network Error`, ...prev]);
+            addLog('Network Error', true);
         }
+    };
+
+    const toggleTool = (id: string) => {
+        setSelectedToolIds(prev =>
+            prev.includes(id) ? prev.filter(t => t !== id) : [...prev, id]
+        );
     };
 
     if (!isAuthenticated) {
@@ -78,104 +167,162 @@ export default function AdminNewsletterPage() {
     }
 
     return (
-        <div className="min-h-screen bg-zinc-950 text-gray-200 font-sans p-6 md:p-12">
-            <div className="max-w-5xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <div className="min-h-screen bg-zinc-950 text-gray-200 font-sans p-6 md:p-8">
+            <div className="max-w-[1400px] mx-auto grid grid-cols-1 lg:grid-cols-12 gap-8">
 
-                {/* Left: Compose Area */}
-                <div className="lg:col-span-2 space-y-6">
-                    <div className="flex items-center justify-between">
-                        <h1 className="text-2xl font-bold flex items-center gap-3 text-white">
-                            <Send size={24} className="text-indigo-500" />
-                            Broadcast Console
+                {/* Left Column: Configuration (4 cols) */}
+                <div className="lg:col-span-4 space-y-6 overflow-y-auto max-h-[calc(100vh-4rem)] custom-scrollbar pr-2">
+
+                    {/* Header */}
+                    <div className="flex items-center justify-between mb-4">
+                        <h1 className="text-xl font-bold flex items-center gap-2 text-white">
+                            <Send size={20} className="text-indigo-500" />
+                            Console
                         </h1>
-                        <div className="px-3 py-1 bg-indigo-500/10 text-indigo-400 text-xs font-mono rounded border border-indigo-500/20">
-                            MODE: {testEmail ? 'TEST' : 'LIVE'}
+                        <div className="px-2 py-0.5 bg-indigo-500/10 text-indigo-400 text-xs font-mono rounded border border-indigo-500/20">
+                            v2.0
                         </div>
                     </div>
 
-                    <form onSubmit={handleSend} className="space-y-4 bg-zinc-900/50 p-6 rounded-2xl border border-white/5">
+                    {/* Main Form */}
+                    <div className="space-y-4">
                         <div>
-                            <label className="block text-xs font-mono text-gray-500 mb-2 uppercase">Subject Line</label>
+                            <label className="block text-xs font-mono text-gray-500 mb-1.5 uppercase">Subject Line</label>
                             <input
                                 type="text"
                                 value={subject}
                                 onChange={(e) => setSubject(e.target.value)}
-                                placeholder="Ex: 5 New AI Tools You Missed..."
-                                className="w-full bg-black/50 border border-white/10 rounded-lg p-3 text-white focus:border-indigo-500 outline-none"
+                                placeholder="Ex: 🔥 Top 5 AI Tools of the Week"
+                                className="w-full bg-zinc-900 border border-zinc-800 rounded px-3 py-2 text-sm focus:border-indigo-500 outline-none transition-colors"
                             />
                         </div>
 
                         <div>
-                            <label className="block text-xs font-mono text-gray-500 mb-2 uppercase">Email Body (HTML/Text)</label>
+                            <label className="block text-xs font-mono text-gray-500 mb-1.5 uppercase">Intro Text (HTML Supported)</label>
                             <textarea
-                                value={content}
-                                onChange={(e) => setContent(e.target.value)}
-                                rows={12}
-                                placeholder="<p>Hello world...</p>"
-                                className="w-full bg-black/50 border border-white/10 rounded-lg p-3 text-white font-mono text-sm focus:border-indigo-500 outline-none"
+                                value={introText}
+                                onChange={(e) => setIntroText(e.target.value)}
+                                rows={3}
+                                placeholder="Custom intro..."
+                                className="w-full bg-zinc-900 border border-zinc-800 rounded px-3 py-2 text-sm focus:border-indigo-500 outline-none transition-colors font-mono"
                             />
                         </div>
 
-                        <div className="pt-4 flex gap-4">
-                            <div className="flex-grow">
-                                <label className="block text-xs font-mono text-gray-500 mb-2 uppercase">Test Recipient (Optional)</label>
+                        {/* Tool Selector */}
+                        <div>
+                            <div className="flex items-center justify-between mb-2">
+                                <label className="block text-xs font-mono text-gray-500 uppercase">Selected Tools ({selectedToolIds.length})</label>
+                                <button onClick={fetchTools} className="text-zinc-500 hover:text-white transition-colors">
+                                    <RefreshCw size={12} />
+                                </button>
+                            </div>
+                            <div className="bg-zinc-900 border border-zinc-800 rounded-lg max-h-[300px] overflow-y-auto">
+                                {isLoadingTools ? (
+                                    <div className="p-4 text-center text-xs text-zinc-500">Loading tools...</div>
+                                ) : (
+                                    <div className="divide-y divide-zinc-800">
+                                        {availableTools.map(tool => (
+                                            <div
+                                                key={tool.id}
+                                                onClick={() => toggleTool(tool.id)}
+                                                className={`p-3 flex items-start gap-3 cursor-pointer hover:bg-zinc-800/50 transition-colors ${selectedToolIds.includes(tool.id) ? 'bg-indigo-500/5' : ''}`}
+                                            >
+                                                <div className={`mt-0.5 w-4 h-4 rounded border flex items-center justify-center flex-shrink-0 ${selectedToolIds.includes(tool.id) ? 'bg-indigo-500 border-indigo-500' : 'border-zinc-600'}`}>
+                                                    {selectedToolIds.includes(tool.id) && <CheckCircle size={10} className="text-white" />}
+                                                </div>
+                                                <div className="flex-grow min-w-0">
+                                                    <div className="flex items-center justify-between">
+                                                        <div className="font-medium text-sm truncate text-zinc-200">{tool.name}</div>
+                                                        <div className="text-xs text-zinc-500 flex items-center gap-1">⭐ {tool.stars}</div>
+                                                    </div>
+                                                    <div className="text-xs text-zinc-500 truncate">{tool.category}</div>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+
+                        <div>
+                            <label className="block text-xs font-mono text-gray-500 mb-1.5 uppercase">Outro Text</label>
+                            <textarea
+                                value={outroText}
+                                onChange={(e) => setOutroText(e.target.value)}
+                                rows={2}
+                                placeholder="See you next week..."
+                                className="w-full bg-zinc-900 border border-zinc-800 rounded px-3 py-2 text-sm focus:border-indigo-500 outline-none transition-colors font-mono"
+                            />
+                        </div>
+
+                        <div className="pt-4 border-t border-zinc-800">
+                            <div className="mb-4">
+                                <label className="block text-xs font-mono text-gray-500 mb-1.5 uppercase">Test Email</label>
                                 <input
                                     type="email"
                                     value={testEmail}
                                     onChange={(e) => setTestEmail(e.target.value)}
-                                    placeholder="marketing@example.com"
-                                    className="w-full bg-black/50 border border-white/10 rounded-lg p-3 text-sm focus:border-indigo-500 outline-none"
+                                    placeholder="me@example.com"
+                                    className="w-full bg-zinc-900 border border-zinc-800 rounded px-3 py-2 text-sm focus:border-indigo-500 outline-none"
                                 />
                             </div>
-                            <div className="flex items-end">
+
+                            <div className="grid grid-cols-2 gap-3">
                                 <button
-                                    disabled={status === 'sending'}
-                                    className="px-8 py-3 bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded-lg transition-all disabled:opacity-50 flex items-center gap-2"
+                                    onClick={handlePreview}
+                                    type="button"
+                                    className="px-4 py-2 bg-zinc-800 hover:bg-zinc-700 text-white text-sm font-medium rounded transition-all flex items-center justify-center gap-2"
                                 >
-                                    {status === 'sending' ? 'Transmitting...' : (
-                                        <>
-                                            <Send size={18} /> Send Broadcast
-                                        </>
-                                    )}
+                                    <Eye size={16} /> Generate Preview
+                                </button>
+                                <button
+                                    onClick={handleSend}
+                                    disabled={status === 'sending'}
+                                    className="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-medium rounded transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+                                >
+                                    <Send size={16} /> {testEmail ? 'Send Test' : 'Broadcast'}
                                 </button>
                             </div>
                         </div>
-                    </form>
-                </div>
 
-                {/* Right: Status & Logs */}
-                <div className="space-y-6">
-                    <div className="bg-zinc-900 border border-white/5 rounded-2xl p-6 h-full flex flex-col">
-                        <h2 className="text-sm font-mono text-gray-500 uppercase mb-4">System_Logs</h2>
-                        <div className="flex-grow bg-black rounded-lg p-4 font-mono text-xs overflow-y-auto max-h-[500px] space-y-2">
-                            {logs.length === 0 && <span className="text-gray-700">Waiting for command...</span>}
+                        {/* Logs */}
+                        <div className="mt-6 bg-black rounded border border-zinc-800 p-3 h-40 overflow-y-auto font-mono text-[10px] text-zinc-400">
+                            {logs.length === 0 && <span className="opacity-50">System ready.</span>}
                             {logs.map((log, i) => (
-                                <div key={i} className={`pb-1 border-b border-white/5 ${log.includes('Error') ? 'text-red-400' : 'text-green-400'}`}>
-                                    {log}
-                                </div>
+                                <div key={i} className="mb-0.5">{log}</div>
                             ))}
                         </div>
+                    </div>
+                </div>
 
-                        {status === 'success' && (
-                            <div className="mt-4 p-4 bg-green-500/10 border border-green-500/20 rounded-lg flex items-center gap-3 text-green-400">
-                                <CheckCircle size={20} />
-                                <div>
-                                    <div className="font-bold">Broadcast Complete</div>
-                                    <div className="text-xs opacity-70">Message queued for delivery.</div>
-                                </div>
-                            </div>
+                {/* Right Column: Preview (8 cols) */}
+                <div className="lg:col-span-8 bg-zinc-900 rounded-2xl border border-zinc-800 overflow-hidden flex flex-col h-[calc(100vh-4rem)]">
+                    <div className="bg-zinc-950 border-b border-zinc-800 p-3 flex items-center justify-between">
+                        <span className="text-xs font-mono text-zinc-500 uppercase">Email Preview</span>
+                        {previewHtml && (
+                            <span className="text-xs text-green-500 flex items-center gap-1">
+                                <CheckCircle size={12} /> Generated
+                            </span>
                         )}
-                        {status === 'error' && (
-                            <div className="mt-4 p-4 bg-red-500/10 border border-red-500/20 rounded-lg flex items-center gap-3 text-red-400">
-                                <AlertCircle size={20} />
-                                <div>
-                                    <div className="font-bold">Transmission Failed</div>
-                                    <div className="text-xs opacity-70">Check logs for details.</div>
+                    </div>
+                    <div className="flex-grow bg-white relative">
+                        {previewHtml ? (
+                            <iframe
+                                srcDoc={previewHtml}
+                                className="w-full h-full border-0"
+                                title="Email Preview"
+                            />
+                        ) : (
+                            <div className="absolute inset-0 flex items-center justify-center text-zinc-300">
+                                <div className="text-center">
+                                    <Eye size={48} className="mx-auto mb-2 opacity-20" />
+                                    <p className="text-sm">Click "Generate Preview" to see the email</p>
                                 </div>
                             </div>
                         )}
                     </div>
                 </div>
+
             </div>
         </div>
     );

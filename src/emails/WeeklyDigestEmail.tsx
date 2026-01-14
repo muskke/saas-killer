@@ -27,6 +27,8 @@ export interface HotTool {
 
 interface WeeklyDigestEmailProps {
     hotTools?: HotTool[];
+    introText?: string;
+    outroText?: string;
 }
 
 // 默认数据用于预览
@@ -59,8 +61,10 @@ const defaultHotTools: HotTool[] = [
 
 export const WeeklyDigestEmail = ({
     hotTools = defaultHotTools,
+    introText,
+    outroText,
 }: WeeklyDigestEmailProps) => {
-    const previewText = `🔥 This week's top open-source alternatives are here!`;
+    const previewText = introText || `🔥 This week's top open-source alternatives are here!`;
     const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://saas-killer.chaos-meme.cn';
 
     return (
@@ -91,9 +95,13 @@ export const WeeklyDigestEmail = ({
                         <Heading style={heroHeading}>
                             Your Weekly Dose of <span style={{ color: '#818cf8' }}>Open Source</span>.
                         </Heading>
-                        <Text style={heroText}>
-                            We've tracked the fastest-growing projects this week. Here are the top picks you shouldn't miss.
-                        </Text>
+                        {introText ? (
+                            <Text style={heroText} dangerouslySetInnerHTML={{ __html: introText.replace(/\n/g, '<br/>') }} />
+                        ) : (
+                            <Text style={heroText}>
+                                We've tracked the fastest-growing projects this week. Here are the top picks you shouldn't miss.
+                            </Text>
+                        )}
                     </Section>
 
                     <Hr style={divider} />
@@ -145,6 +153,13 @@ export const WeeklyDigestEmail = ({
                             </Link>
                         ))}
                     </Section>
+
+                    {/* Outro - Optional */}
+                    {outroText && (
+                        <Section style={{ padding: '0 24px 24px 24px', backgroundColor: '#111', color: '#a1a1aa', fontSize: '15px' }}>
+                            <Text style={heroText} dangerouslySetInnerHTML={{ __html: outroText.replace(/\n/g, '<br/>') }} />
+                        </Section>
+                    )}
 
                     {/* CTA */}
                     <Section style={{ textAlign: 'center', margin: '32px 0' }}>
