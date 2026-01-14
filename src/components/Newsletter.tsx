@@ -1,21 +1,21 @@
 'use client';
 
-import { Mail, ArrowRight, CheckCircle2 } from 'lucide-react';
+import { Mail, ArrowRight, CheckCircle2, Terminal } from 'lucide-react';
 import { useState } from 'react';
 
 export default function Newsletter() {
   const [email, setEmail] = useState('');
   const [status, setStatus] = useState<'idle' | 'submitting' | 'success'>('idle');
 
-  // 🔥 替换成你刚才在 Formspree 拿到的 URL！
-  const FORMSPREE_URL = "https://formspree.io/f/YOUR_FORM_ID"; 
+  // 🔥 Replace with your Formspree URL
+  const FORMSPREE_URL = "https://formspree.io/f/mykkzgkr";
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!email) return;
-    
+
     setStatus('submitting');
-    
+
     try {
       const response = await fetch(FORMSPREE_URL, {
         method: 'POST',
@@ -25,10 +25,10 @@ export default function Newsletter() {
           'Content-Type': 'application/json'
         },
       });
-      
+
       if (response.ok) {
         setStatus('success');
-        setEmail(''); // 清空输入框
+        setEmail('');
       } else {
         alert("Something went wrong. Please try again.");
         setStatus('idle');
@@ -40,73 +40,63 @@ export default function Newsletter() {
   };
 
   return (
-    <section className="relative w-full max-w-5xl mx-auto my-20 px-4">
-      {/* 核心卡片容器 */}
-      <div className="relative overflow-hidden bg-indigo-900 rounded-3xl p-8 md:p-12 shadow-2xl border border-indigo-700">
-        
-        {/* 装饰背景：制造一种“发光”的高级感 */}
-        <div className="absolute top-0 right-0 w-64 h-64 bg-purple-500/20 rounded-full blur-3xl -mr-16 -mt-16 pointer-events-none"></div>
-        <div className="absolute bottom-0 left-0 w-48 h-48 bg-blue-500/20 rounded-full blur-3xl -ml-10 -mb-10 pointer-events-none"></div>
+    <section className="w-full max-w-2xl mx-auto my-24 px-4">
+      {/* Container: Minimalist Bar */}
+      <div className="relative group rounded-xl border border-gray-200 dark:border-white/10 bg-white/50 dark:bg-zinc-900/50 backdrop-blur-sm overflow-hidden hover:border-indigo-500/30 transition-all duration-300">
 
-        <div className="relative z-10 flex flex-col md:flex-row items-center justify-between gap-10">
-          
-          {/* 左侧：文案轰炸 */}
-          <div className="text-center md:text-left max-w-lg">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-800/50 border border-indigo-700 text-indigo-200 text-xs font-bold mb-6">
-              <Mail size={14} />
-              <span>Weekly Digest</span>
-            </div>
-            
-            <h2 className="text-3xl md:text-4xl font-black text-white mb-4 leading-tight">
-              Stop Missing Out on <br/>
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-yellow-300 to-orange-400">
-                Hidden Gems.
-              </span>
-            </h2>
-            <p className="text-indigo-200 text-lg mb-6">
-              Join 5,000+ developers receiving the latest open-source alternatives directly in their inbox. No spam, just code.
-            </p>
-            
-            <div className="flex flex-wrap gap-4 justify-center md:justify-start text-sm text-indigo-300 font-medium">
-              <span className="flex items-center gap-1"><CheckCircle2 size={16} className="text-green-400"/> Free forever</span>
-              <span className="flex items-center gap-1"><CheckCircle2 size={16} className="text-green-400"/> Unsubscribe anytime</span>
-            </div>
+        {/* Subtle decorative glow on hover */}
+        <div className="absolute inset-0 bg-gradient-to-r from-indigo-500/5 via-purple-500/5 to-pink-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
+
+        <div className="relative flex flex-col md:flex-row items-center justify-between p-1.5 gap-2 md:gap-4">
+
+          {/* Label / Icon Area */}
+          <div className="hidden md:flex items-center gap-3 pl-4 pr-2 text-gray-500 dark:text-zinc-500 select-none">
+            <Terminal size={18} />
+            <span className="font-mono text-xs font-medium tracking-wide border-r border-gray-200 dark:border-white/10 pr-4 py-1">
+              WEEKLY_DIGEST
+            </span>
           </div>
 
-          {/* 右侧：行动表单 */}
-          <div className="w-full max-w-md bg-white/5 backdrop-blur-sm p-2 rounded-2xl border border-white/10">
+          {/* Form Area */}
+          <div className="w-full flex-grow">
             {status === 'success' ? (
-              <div className="bg-green-500/20 text-green-300 p-8 rounded-xl text-center font-bold border border-green-500/30 flex flex-col items-center gap-2">
-                <CheckCircle2 size={32} />
-                <span>You're in! Welcome to the club.</span>
+              <div className="flex items-center justify-center md:justify-start gap-2 text-green-600 dark:text-green-400 py-3 pl-2 font-mono text-sm">
+                <CheckCircle2 size={16} />
+                <span>Subscribed successfully.</span>
               </div>
             ) : (
-              <form onSubmit={handleSubmit} className="flex flex-col gap-3">
-                <input 
-                  type="email" 
+              <form onSubmit={handleSubmit} className="flex flex-col md:flex-row gap-2 w-full">
+                <input
+                  type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  placeholder="enter@your.email" 
+                  placeholder="Join 5,000+ developers discovering tools..."
                   required
                   disabled={status === 'submitting'}
-                  className="w-full px-6 py-4 rounded-xl bg-indigo-950/50 border border-indigo-700 text-white placeholder-indigo-400 focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:border-transparent transition-all"
+                  className="flex-grow bg-transparent border-none outline-none text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-zinc-600 text-sm font-medium px-4 py-3 md:py-0 w-full"
                 />
-                <button 
-                  type="submit" 
+                <button
+                  type="submit"
                   disabled={status === 'submitting'}
-                  className="w-full px-6 py-4 bg-yellow-400 hover:bg-yellow-300 text-yellow-900 font-black rounded-xl transition-all transform hover:scale-[1.02] active:scale-95 flex items-center justify-center gap-2"
+                  className="shrink-0 px-4 py-2 bg-gray-900 dark:bg-white text-white dark:text-black font-bold text-xs rounded-lg hover:opacity-90 transition-opacity disabled:opacity-50 flex items-center justify-center gap-2 min-w-[100px]"
                 >
-                  {status === 'submitting' ? 'Joining...' : 'Subscribe Now'}
-                  {!status.startsWith('submit') && <ArrowRight size={18} />}
+                  {status === 'submitting' ? '...' : (
+                    <>
+                      <span>SUBSCRIBE</span>
+                      <ArrowRight size={12} />
+                    </>
+                  )}
                 </button>
               </form>
             )}
-            <p className="text-center text-indigo-400/60 text-xs mt-3">
-              We respect your privacy. Zero spam policy.
-            </p>
           </div>
-
         </div>
+      </div>
+
+      {/* Footer minimal text */}
+      <div className="mt-4 flex justify-between px-2 text-[10px] text-gray-400 dark:text-zinc-600 font-mono uppercase tracking-wider opacity-60">
+        <span>No spam, strictly code.</span>
+        <span>Unsubscribe anytime.</span>
       </div>
     </section>
   );
