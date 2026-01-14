@@ -1,9 +1,9 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useRef } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { Search, Star, ArrowRight } from 'lucide-react';
+import { Search, Star, ArrowRight, Zap, Flame, Sparkles } from 'lucide-react';
 import AdBanner from './AdBanner';
 
 type Tool = {
@@ -20,104 +20,310 @@ type Tool = {
   };
 };
 
+// 🎨 Spotlight Card Component with Enhanced Visuals
+const ToolCard = ({ tool, categoryColor, index }: { tool: Tool; categoryColor: string; index: number }) => {
+  const divRef = useRef<HTMLAnchorElement>(null);
+  const [position, setPosition] = useState({ x: 0, y: 0 });
+  const [opacity, setOpacity] = useState(0);
+
+  const handleMouseMove = (e: React.MouseEvent<HTMLAnchorElement>) => {
+    if (!divRef.current) return;
+    const rect = divRef.current.getBoundingClientRect();
+    setPosition({ x: e.clientX - rect.left, y: e.clientY - rect.top });
+    setOpacity(1);
+  };
+
+  // Determine competitor text
+  const competitor = tool.rich_features?.competitor_name
+    ? `vs ${tool.rich_features.competitor_name}`
+    : tool.category === 'DevOps' ? 'vs AWS/Vercel'
+      : tool.category === 'Note-taking' ? 'vs Notion'
+        : tool.category === 'CRM' ? 'vs Salesforce'
+          : tool.category === 'E-commerce' ? 'vs Shopify'
+            : 'Open Source';
+
+  // 🔥 Check if it's a trending project (high stars)
+  const isTrending = tool.stars > 50000;
+  const isPopular = tool.stars > 20000;
+
+  return (
+    <Link
+      href={`/alternatives/${tool.slug}`}
+      ref={divRef}
+      onMouseMove={handleMouseMove}
+      onMouseLeave={() => setOpacity(0)}
+      style={{
+        animationDelay: `${index * 50}ms`,
+        // @ts-ignore
+        '--spotlight-color': 'rgba(99, 102, 241, 0.08)', // Light mode: slightly stronger indigo
+        '--spotlight-dark-color': 'rgba(129, 140, 248, 0.15)', // Dark mode
+      }}
+      className="group relative flex flex-col h-full bg-white hover:bg-gray-50/80 dark:bg-zinc-900/70 dark:hover:bg-zinc-900/70 rounded-3xl border border-gray-200 dark:border-white/[0.08] overflow-hidden transition-all duration-500 hover:shadow-[0_8px_30px_rgb(0,0,0,0.04),0_20px_40px_-12px_rgba(99,102,241,0.1)] dark:hover:shadow-[0_20px_50px_-12px_rgba(99,102,241,0.15)] hover:border-indigo-200/50 dark:hover:border-white/20 hover:-translate-y-2 animate-fade-in-up"
+    >
+      {/* 🌈 Subtle Border Glow on Hover */}
+      <div className="absolute inset-0 rounded-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"
+        style={{
+          boxShadow: 'inset 0 0 0 1px rgba(99, 102, 241, 0.2)', // Increased visibility for light mode
+        }}
+      />
+
+      {/* 🕸️ Mesh Grid Background */}
+      <div
+        className="absolute inset-0 opacity-[0.03] dark:opacity-[0.04]" // Slightly more visible in light mode
+        style={{
+          backgroundImage: `radial-gradient(circle at 1px 1px, currentColor 1px, transparent 0)`,
+          backgroundSize: '24px 24px',
+        }}
+      />
+
+      {/* 🔦 Spotlight Gradient Effect (Light Mode) */}
+      <div
+        className="pointer-events-none absolute -inset-px transition duration-500 z-10 opacity-0 group-hover:opacity-100 dark:hidden"
+        style={{
+          background: `radial-gradient(600px circle at ${position.x}px ${position.y}px, rgba(99, 102, 241, 0.10), transparent 40%)`
+        }}
+      />
+
+      {/* 🔦 Spotlight Gradient Effect (Dark Mode) */}
+      <div
+        className="pointer-events-none absolute -inset-px transition duration-500 z-10 opacity-0 group-hover:opacity-100 hidden dark:block"
+        style={{
+          background: `radial-gradient(600px circle at ${position.x}px ${position.y}px, rgba(129, 140, 248, 0.15), transparent 40%)`
+        }}
+      />
+
+      {/* ✨ Corner Sparkle Decoration */}
+      <div className="absolute top-0 right-0 w-32 h-32 overflow-hidden pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-700">
+        <div className="absolute -top-16 -right-16 w-32 h-32 bg-gradient-to-br from-indigo-500/20 via-purple-500/10 to-transparent rounded-full blur-2xl" />
+      </div>
+
+      <div className="relative p-6 flex-grow z-20 flex flex-col">
+        {/* Header: Logo & Badges */}
+        <div className="flex justify-between items-start mb-5">
+          {/* Logo with Glow Effect */}
+          <div className="relative">
+            <div className="absolute inset-0 bg-indigo-500/20 rounded-2xl blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+            <div className="relative w-14 h-14 rounded-2xl bg-gradient-to-br from-gray-50 to-gray-100 dark:from-zinc-800 dark:to-zinc-900 border border-gray-100 dark:border-white/10 flex items-center justify-center shadow-sm group-hover:scale-110 transition-all duration-500 overflow-hidden">
+              {tool.logo ? (
+                <Image src={tool.logo} alt={tool.name} width={56} height={56} className="w-full h-full object-cover" unoptimized />
+              ) : (
+                <span className="text-2xl font-bold bg-gradient-to-br from-indigo-500 to-purple-600 bg-clip-text text-transparent">{tool.name.charAt(0)}</span>
+              )}
+            </div>
+          </div>
+
+          {/* Badges Stack */}
+          <div className="flex flex-col items-end gap-2">
+            {/* 🔥 Trending Badge */}
+            {isTrending && (
+              <div className="flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold bg-gradient-to-r from-orange-500 to-red-500 text-white shadow-lg shadow-orange-500/25 animate-pulse-slow">
+                <Flame size={10} className="fill-current" />
+                TRENDING
+              </div>
+            )}
+
+            {/* ⚔️ VS Badge */}
+            <div className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold border backdrop-blur-md transition-all duration-300 group-hover:scale-105 ${categoryColor}`}>
+              <Zap size={12} className="fill-current" />
+              {competitor}
+            </div>
+          </div>
+        </div>
+
+        {/* Content */}
+        <div className="space-y-3">
+          <h3 className="font-bold text-xl text-gray-900 dark:text-white group-hover:text-transparent group-hover:bg-clip-text group-hover:bg-gradient-to-r group-hover:from-indigo-500 group-hover:to-purple-600 transition-all duration-300">
+            {tool.name}
+          </h3>
+          <p className="text-sm text-gray-500 dark:text-zinc-400 line-clamp-2 leading-relaxed group-hover:text-gray-600 dark:group-hover:text-zinc-300 transition-colors">
+            {tool.description}
+          </p>
+        </div>
+
+        {/* Footer: Meta Info */}
+        <div className="mt-auto pt-6 flex items-center justify-between text-sm">
+          <div className="flex items-center gap-4">
+            {/* Star Count with Animation */}
+            <div className={`flex items-center gap-1.5 font-semibold transition-all duration-300 ${isPopular
+                ? 'text-amber-500 dark:text-amber-400'
+                : 'text-gray-400 dark:text-zinc-500 group-hover:text-amber-500 dark:group-hover:text-amber-400'
+              }`}>
+              <Star size={16} className={`transition-all duration-300 ${isPopular ? 'fill-current' : 'group-hover:fill-current'}`} />
+              <span>
+                {tool.stars < 1000 ? tool.stars : (tool.stars / 1000).toFixed(1) + 'k'}
+              </span>
+              {isPopular && <Sparkles size={12} className="text-amber-400 animate-pulse" />}
+            </div>
+
+            {/* Category */}
+            <div className="flex items-center gap-1.5 text-gray-400 dark:text-zinc-500">
+              <span className="w-1 h-1 rounded-full bg-gray-300 dark:bg-zinc-600"></span>
+              <span className="text-xs font-medium">{tool.category}</span>
+            </div>
+          </div>
+
+          {/* Arrow Button */}
+          <div className="w-9 h-9 rounded-full flex items-center justify-center bg-gray-100 dark:bg-white/5 text-gray-400 group-hover:bg-gradient-to-r group-hover:from-indigo-500 group-hover:to-purple-600 group-hover:text-white transition-all duration-500 transform group-hover:rotate-[-45deg] group-hover:scale-110 group-hover:shadow-lg group-hover:shadow-indigo-500/25">
+            <ArrowRight size={16} />
+          </div>
+        </div>
+      </div>
+
+      {/* Bottom Gradient Line on Hover */}
+      <div className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 transform scale-x-0 group-hover:scale-x-100 transition-transform duration-500 origin-left" />
+    </Link>
+  );
+};
+
+// 💎 Sponsored Card
+const SponsoredCard = () => {
+  const divRef = useRef<HTMLDivElement>(null);
+  const [position, setPosition] = useState({ x: 0, y: 0 });
+  const [opacity, setOpacity] = useState(0);
+
+  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (!divRef.current) return;
+    const rect = divRef.current.getBoundingClientRect();
+    setPosition({ x: e.clientX - rect.left, y: e.clientY - rect.top });
+    setOpacity(1);
+  };
+
+  return (
+    <div
+      ref={divRef}
+      onMouseMove={handleMouseMove}
+      onMouseLeave={() => setOpacity(0)}
+      className="group relative flex flex-col bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 rounded-3xl overflow-hidden shadow-2xl transition-all duration-500 transform hover:-translate-y-2 hover:shadow-[0_25px_60px_-12px_rgba(99,102,241,0.3)] animate-fade-in-up"
+    >
+      {/* Animated Background Orbs */}
+      <div className="absolute top-0 left-0 w-48 h-48 bg-indigo-600/30 rounded-full blur-3xl animate-float" />
+      <div className="absolute bottom-0 right-0 w-48 h-48 bg-purple-600/20 rounded-full blur-3xl animate-float-delayed" />
+
+      {/* Grid Pattern */}
+      <div
+        className="absolute inset-0 opacity-10"
+        style={{
+          backgroundImage: `radial-gradient(circle at 1px 1px, rgba(255,255,255,0.3) 1px, transparent 0)`,
+          backgroundSize: '32px 32px',
+        }}
+      />
+
+      <div
+        className="pointer-events-none absolute -inset-px transition duration-500 z-10"
+        style={{
+          opacity,
+          background: `radial-gradient(800px circle at ${position.x}px ${position.y}px, rgba(129, 140, 248, 0.2), transparent 40%)`
+        }}
+      />
+
+      <div className="relative z-20 p-6 flex flex-col h-full">
+        <div className="flex justify-between items-start mb-6">
+          <div className="relative">
+            <div className="absolute inset-0 bg-indigo-500/40 rounded-2xl blur-xl animate-pulse" />
+            <div className="relative w-14 h-14 rounded-2xl bg-gradient-to-br from-indigo-500/30 to-purple-600/30 text-indigo-300 flex items-center justify-center text-2xl border border-indigo-500/30 backdrop-blur-sm">
+              ☁️
+            </div>
+          </div>
+          <span className="bg-gradient-to-r from-amber-200 via-yellow-300 to-amber-200 text-yellow-900 text-[10px] font-black tracking-widest px-3 py-1.5 rounded-full uppercase shadow-lg">Sponsored</span>
+        </div>
+
+        <h3 className="text-xl font-bold text-white mb-2 group-hover:text-transparent group-hover:bg-clip-text group-hover:bg-gradient-to-r group-hover:from-indigo-300 group-hover:to-purple-300 transition-all">DigitalOcean</h3>
+        <p className="text-sm text-indigo-200/80 mb-6 leading-relaxed">
+          Ready to deploy? Get <span className="text-white font-bold">$200 in free credit</span> to host your favorite open source tools instantly.
+        </p>
+
+        <a
+          href="https://m.do.co/c/YOUR_AFFILIATE_CODE"
+          target="_blank"
+          className="mt-auto w-full group/btn relative flex items-center justify-center gap-2 overflow-hidden bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-400 hover:to-purple-500 text-white font-bold py-4 rounded-2xl transition-all active:scale-95 shadow-lg shadow-indigo-500/25"
+        >
+          {/* Button Shine Effect */}
+          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover/btn:translate-x-full transition-transform duration-700" />
+          <span className="relative">Claim $200 Credit</span>
+          <ArrowRight size={16} className="relative group-hover/btn:translate-x-1 transition-transform" />
+        </a>
+      </div>
+
+      {/* Border Glow */}
+      <div className="absolute inset-0 rounded-3xl border border-indigo-500/20 group-hover:border-indigo-500/40 transition-colors pointer-events-none" />
+    </div>
+  )
+}
+
+
 export default function ToolGrid({ tools, categories }: { tools: Tool[], categories: string[] }) {
   const [search, setSearch] = useState('');
   const [activeCategory, setActiveCategory] = useState('All');
-
-  // 🔥 新增：分页状态，默认只显示 24 个
   const [displayCount, setDisplayCount] = useState(24);
 
-  // 🔥 核心修复：使用 useMemo 缓存过滤逻辑，并增加空值防御
   const filteredTools = useMemo(() => {
     return tools.filter((tool) => {
-      // 1. 防御：如果数据缺胳膊少腿，直接跳过，防止 .toLowerCase() 报错
       if (!tool || !tool.name) return false;
-
-      // 2. 安全获取字段 (如果不小心是 null，就变成空字符串)
       const toolName = (tool.name || '').toLowerCase();
       const toolDesc = (tool.description || '').toLowerCase();
-      const toolCat = (tool.category || 'Uncategorized'); // 保持原大小写用于显示
+      const toolCat = (tool.category || 'Uncategorized');
       const searchLower = search.toLowerCase();
-
-      // 3. 搜索匹配逻辑
-      const matchesSearch = toolName.includes(searchLower) ||
-        toolDesc.includes(searchLower);
-
-      // 4. 分类匹配逻辑
+      const matchesSearch = toolName.includes(searchLower) || toolDesc.includes(searchLower);
       const matchesCategory = activeCategory === 'All' || toolCat === activeCategory;
-
       return matchesSearch && matchesCategory;
     });
   }, [tools, search, activeCategory]);
 
-  // 🔥 核心：截取当前要显示的数据
   const visibleTools = filteredTools.slice(0, displayCount);
 
-  // 处理“加载更多”
-  const handleLoadMore = () => {
-    setDisplayCount(prev => prev + 24);
-  };
-
-  // 简单的哈希函数，根据分类名生成一致的颜色
-  const getCategoryColor = (cat: string) => {
-    const colors = [
-      'bg-blue-50 text-blue-700 border-blue-100', // Developer
-      'bg-purple-50 text-purple-700 border-purple-100', // Creative
-      'bg-emerald-50 text-emerald-700 border-emerald-100', // Business
-      'bg-orange-50 text-orange-700 border-orange-100', // Other
-    ];
-    // 简单的分配逻辑
-    if (['BaaS', 'DevOps', 'Monitoring', 'Security', 'Database', 'AI/ML'].includes(cat)) return colors[0];
-    if (['Design', 'Media', 'Docs', 'Note-taking'].includes(cat)) return colors[1];
-    if (['CRM', 'ERP', 'Finance', 'Marketing', 'E-commerce'].includes(cat)) return colors[2];
-    return colors[3];
+  // Category Colors - More vibrant
+  const getCategoryTheme = (cat: string) => {
+    if (['BaaS', 'DevOps', 'Security', 'Database'].includes(cat)) return 'bg-cyan-500/10 text-cyan-600 dark:text-cyan-300 border-cyan-500/30 group-hover:bg-cyan-500/20';
+    if (['Design', 'Media', 'UI'].includes(cat)) return 'bg-fuchsia-500/10 text-fuchsia-600 dark:text-fuchsia-300 border-fuchsia-500/30 group-hover:bg-fuchsia-500/20';
+    if (['CRM', 'ERP', 'Finance', 'No-Code', 'E-commerce'].includes(cat)) return 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-300 border-emerald-500/30 group-hover:bg-emerald-500/20';
+    if (['Note-taking', 'Productivity', 'Docs'].includes(cat)) return 'bg-amber-500/10 text-amber-600 dark:text-amber-300 border-amber-500/30 group-hover:bg-amber-500/20';
+    return 'bg-indigo-500/10 text-indigo-600 dark:text-indigo-300 border-indigo-500/30 group-hover:bg-indigo-500/20';
   };
 
   return (
-    <div className="max-w-7xl mx-auto px-4 py-8 relative z-10">
+    <div className="max-w-7xl mx-auto px-4 py-12 relative z-10">
 
-      {/* 搜索与筛选区域 - 重新设计 */}
-      <div className="mb-8">
-        {/* 搜索框 - 更突出 */}
-        <div className="max-w-2xl mx-auto mb-6">
-          <div className="relative">
+      {/* 🔍 Search & Filter Section */}
+      <div className="mb-12 space-y-8">
+        {/* Search with Animated Glow */}
+        <div className="max-w-3xl mx-auto relative group">
+          <div className="absolute -inset-1 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 rounded-2xl opacity-0 group-focus-within:opacity-75 blur-lg transition-all duration-500 animate-gradient-x"></div>
+          <div className="relative bg-white dark:bg-zinc-900 rounded-xl flex items-center p-2 shadow-xl border border-gray-100 dark:border-zinc-800 group-focus-within:border-transparent transition-colors">
+            <Search className="ml-4 text-gray-400 group-focus-within:text-indigo-500 transition-colors" size={22} />
             <input
               type="text"
-              placeholder="Search 200+ open source alternatives..."
+              placeholder="Search for an alternative to..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="w-full pl-12 pr-4 py-4 rounded-2xl border-2 border-gray-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-zinc-500 focus:border-indigo-500 dark:focus:border-indigo-500 focus:ring-4 focus:ring-indigo-100 dark:focus:ring-indigo-500/20 transition-all outline-none text-lg shadow-sm"
+              className="w-full text-lg p-3 bg-transparent border-none outline-none text-gray-900 dark:text-white placeholder-gray-400"
             />
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 dark:text-zinc-500" size={22} />
             {search && (
-              <button
-                onClick={() => setSearch('')}
-                className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-zinc-300 p-1"
-              >
-                ✕
-              </button>
+              <button onClick={() => setSearch('')} className="p-2 hover:bg-gray-100 dark:hover:bg-zinc-800 rounded-lg text-gray-400 hover:text-gray-600 transition-colors">✕</button>
             )}
+            <div className="hidden md:flex px-3 py-1.5 bg-gray-50 dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700 rounded-lg text-xs text-gray-400 font-mono">
+              ⌘K
+            </div>
           </div>
         </div>
 
-        {/* 分类标签 - 居中显示 */}
+        {/* Categories - Pill Style */}
         <div className="flex flex-wrap justify-center gap-2">
           <button
             onClick={() => setActiveCategory('All')}
-            className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-200 ${activeCategory === 'All'
-              ? 'bg-gray-900 dark:bg-white text-white dark:text-gray-900 shadow-md'
-              : 'bg-gray-100 dark:bg-zinc-800 text-gray-600 dark:text-zinc-400 hover:bg-gray-200 dark:hover:bg-zinc-700 hover:text-gray-900 dark:hover:text-white'
+            className={`px-5 py-2.5 rounded-full text-sm font-semibold transition-all duration-300 ${activeCategory === 'All'
+              ? 'bg-gradient-to-r from-indigo-500 to-purple-600 text-white shadow-lg shadow-indigo-500/30 scale-105'
+              : 'bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 text-gray-600 dark:text-gray-400 hover:border-indigo-300 dark:hover:border-indigo-500/30 hover:text-indigo-600 dark:hover:text-indigo-400 hover:-translate-y-0.5 hover:shadow-md'
               }`}
           >
-            All
+            ✨ All Tools
           </button>
           {categories.map((cat) => (
             <button
               key={cat}
               onClick={() => setActiveCategory(cat)}
-              className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-200 ${activeCategory === cat
-                ? 'bg-gray-900 dark:bg-white text-white dark:text-gray-900 shadow-md'
-                : 'bg-gray-100 dark:bg-zinc-800 text-gray-600 dark:text-zinc-400 hover:bg-gray-200 dark:hover:bg-zinc-700 hover:text-gray-900 dark:hover:text-white'
+              className={`px-5 py-2.5 rounded-full text-sm font-semibold transition-all duration-300 ${activeCategory === cat
+                ? 'bg-gradient-to-r from-indigo-500 to-purple-600 text-white shadow-lg shadow-indigo-500/30 scale-105'
+                : 'bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 text-gray-600 dark:text-gray-400 hover:border-indigo-300 dark:hover:border-indigo-500/30 hover:text-indigo-600 dark:hover:text-indigo-400 hover:-translate-y-0.5 hover:shadow-md'
                 }`}
             >
               {cat}
@@ -128,103 +334,43 @@ export default function ToolGrid({ tools, categories }: { tools: Tool[], categor
 
       <AdBanner category={activeCategory} />
 
-      {/* 工具列表网格 */}
+      {/* 📦 Tool Grid */}
       {filteredTools.length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-
-          {/* 赞助商广告位 */}
-          <div className="group flex flex-col bg-gradient-to-br from-indigo-600 to-purple-700 dark:from-indigo-900 dark:to-purple-900 rounded-2xl p-6 shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1 relative overflow-hidden">
-            {/* 标签 */}
-            <div className="absolute top-0 right-0 bg-yellow-400 text-yellow-900 text-xs font-bold px-3 py-1 rounded-bl-lg z-10">
-              SPONSORED
-            </div>
-
-            <div className="flex items-center gap-3 mb-4 z-10">
-              <div className="w-12 h-12 rounded-xl bg-white flex items-center justify-center text-2xl shadow-md">
-                ☁️
-              </div>
-              <div>
-                <h3 className="font-bold text-white text-lg">DigitalOcean</h3>
-                <p className="text-indigo-200 text-xs">Recommended Host</p>
-              </div>
-            </div>
-
-            <p className="text-indigo-100 text-sm mb-4 flex-grow z-10">
-              Don't just look at code—deploy it. Get <strong className="text-white">$200 free credit</strong> to host any of these open-source tools instantly.
-            </p>
-
-            <a href="https://m.do.co/c/YOUR_AFFILIATE_CODE" target="_blank" className="mt-auto w-full bg-white text-indigo-700 font-bold py-2.5 rounded-lg text-center hover:bg-indigo-50 transition-colors z-10 flex items-center justify-center gap-2">
-              Claim $200 Credit
-              <ArrowRight size={16} />
-            </a>
-          </div>
-
-          {visibleTools.map((tool) => (
-            <Link
-              key={tool.slug}
-              href={`/alternatives/${tool.slug}`}
-              className="group bg-white dark:bg-zinc-900 rounded-2xl border border-gray-100 dark:border-zinc-800 p-6 hover:shadow-xl dark:hover:shadow-2xl hover:-translate-y-1 transition-all duration-300 relative overflow-hidden"
-            >
-              {/* 顶部标签 */}
-              <div className="flex justify-between items-start mb-4">
-                <div className="w-12 h-12 rounded-xl bg-gray-50 dark:bg-zinc-800 border border-gray-100 dark:border-zinc-700 flex items-center justify-center p-2 group-hover:scale-110 transition-transform">
-                  {tool.logo ? (
-                    <Image src={tool.logo} alt={tool.name} width={48} height={48} className="w-full h-full object-contain" unoptimized />
-                  ) : (
-                    <span className="text-xl font-bold text-indigo-500">{tool.name.charAt(0)}</span>
-                  )}
-                </div>
-                <div className="flex items-center gap-1 bg-amber-50 dark:bg-amber-500/10 text-amber-600 dark:text-amber-400 px-2 py-1 rounded-lg text-xs font-bold">
-                  <Star size={12} fill="currentColor" />
-                  <span>{(tool.stars / 1000).toFixed(1)}k</span>
-                </div>
-              </div>
-
-              {/* 内容 */}
-              <h3 className="font-bold text-lg text-gray-900 dark:text-white mb-1 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
-                {tool.name}
-              </h3>
-              <p className="text-sm text-gray-500 dark:text-zinc-400 mb-4 line-clamp-2 h-10">
-                {tool.description || `Open source alternative to ${tool.rich_features?.competitor_name || 'proprietary software'}.`}
-              </p>
-
-              {/* 底部信息 */}
-              <div className="flex items-center justify-between pt-4 border-t border-gray-100 dark:border-zinc-800">
-                <span className={`text-xs font-bold uppercase tracking-wider px-2 py-1 rounded border ${getCategoryColor(tool.category)}`}>
-                  {tool.category || 'Tool'}
-                </span>
-                <span className="text-indigo-600 dark:text-indigo-400 opacity-0 group-hover:opacity-100 transition-opacity transform translate-x-2 group-hover:translate-x-0 flex items-center gap-1 text-sm font-bold">
-                  View Analysis <ArrowRight size={14} />
-                </span>
-              </div>
-            </Link>
+          <SponsoredCard />
+          {visibleTools.map((tool, index) => (
+            <ToolCard key={tool.slug} tool={tool} categoryColor={getCategoryTheme(tool.category)} index={index} />
           ))}
 
-          {/* 加载更多按钮 */}
           {visibleTools.length < filteredTools.length && (
-            <div className="col-span-full mt-12 text-center">
+            <div className="col-span-full pt-12 flex justify-center">
               <button
-                onClick={handleLoadMore}
-                className="bg-white dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700 text-gray-900 dark:text-white font-bold py-3 px-8 rounded-full shadow-sm hover:bg-gray-50 dark:hover:bg-zinc-700 hover:shadow-md transition-all active:scale-95"
+                onClick={() => setDisplayCount(prev => prev + 24)}
+                className="group relative px-8 py-4 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-full font-bold text-gray-600 dark:text-gray-300 hover:text-white transition-all active:scale-95 overflow-hidden"
               >
-                Load More Tools ({filteredTools.length - visibleTools.length} remaining)
+                {/* Button Hover Fill */}
+                <div className="absolute inset-0 bg-gradient-to-r from-indigo-500 to-purple-600 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                <span className="relative flex items-center gap-2">
+                  Load More Alternatives <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform" />
+                </span>
               </button>
             </div>
           )}
         </div>
       ) : (
-        /* 空状态 Empty State */
-        <div className="text-center py-20 bg-gray-50 dark:bg-zinc-900 rounded-2xl border border-gray-100 dark:border-zinc-800">
-          <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-gray-100 dark:bg-zinc-800 mb-4 text-3xl">
-            🤔
+        <div className="flex flex-col items-center justify-center py-24 text-center">
+          <div className="w-24 h-24 bg-gradient-to-br from-gray-100 to-gray-200 dark:from-zinc-800 dark:to-zinc-900 rounded-full flex items-center justify-center mb-6 text-4xl shadow-inner">
+            🔍
           </div>
-          <h3 className="text-xl font-bold text-gray-900 dark:text-white">No tools found</h3>
-          <p className="text-gray-500 dark:text-zinc-400 mt-2">Try searching for "Notion" or "Shopify"</p>
+          <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">No tools found</h3>
+          <p className="text-gray-500 max-w-md mx-auto mb-8">
+            We couldn't find any tools matching "{search}". Try a different search term.
+          </p>
           <button
             onClick={() => { setSearch(''); setActiveCategory('All'); }}
-            className="mt-6 text-indigo-600 dark:text-indigo-400 font-bold hover:underline"
+            className="px-6 py-3 bg-gradient-to-r from-indigo-500 to-purple-600 text-white font-bold rounded-full hover:shadow-lg hover:shadow-indigo-500/25 transition-all active:scale-95"
           >
-            Clear Filters
+            Clear all filters
           </button>
         </div>
       )}
