@@ -39,13 +39,16 @@ const ToolCard = ({ tool, categoryColor, index }: { tool: Tool; categoryColor: s
   };
 
   // Determine competitor text
-  const competitor = tool.rich_features?.competitor_name
-    ? `vs ${tool.rich_features.competitor_name}`
-    : tool.category === 'DevOps' ? 'vs AWS/Vercel'
-      : tool.category === 'Note-taking' ? 'vs Notion'
-        : tool.category === 'CRM' ? 'vs Salesforce'
-          : tool.category === 'E-commerce' ? 'vs Shopify'
-            : 'Open Source';
+  const rawCompetitor = tool.rich_features?.competitor_name;
+  // 过滤掉无意义的竞品名称
+  const isValidCompetitor = rawCompetitor &&
+    rawCompetitor.toLowerCase() !== 'saas' &&
+    rawCompetitor.toLowerCase() !== 'n/a' &&
+    rawCompetitor.trim() !== '';
+
+  const competitor = isValidCompetitor
+    ? `vs ${rawCompetitor}`
+    : 'Open Source';
 
   // 🔥 Check if it's a trending project (high stars)
   const isTrending = tool.stars > 50000;

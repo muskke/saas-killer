@@ -333,7 +333,7 @@ function getFallbackData(item) {
     tagline: item.description || "Open Source Alternative",
     long_summary: item.description,
     use_cases: ["Self-hosting"],
-    competitor_name: "SaaS",
+    competitor_name: null,
     comparison_table: [
       { feature: "Pricing", os_value: "Free", saas_value: "Paid" },
       { feature: "Source Code", os_value: "Open", saas_value: "Closed" },
