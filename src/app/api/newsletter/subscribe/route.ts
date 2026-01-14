@@ -10,30 +10,35 @@ export async function POST(request: Request) {
             return NextResponse.json({ error: 'Email is required' }, { status: 400 });
         }
 
-        // 1. Send Welcome Email
+        // 1. Add Contact to Resend Audience (for Unsubscribe support)
+        const audienceId = process.env.RESEND_AUDIENCE_ID;
+
+        if (audienceId) {
+            try {
+                await resend.contacts.create({
+                    email: email,
+                    unsubscribed: false,
+                    audienceId: audienceId
+                });
+            } catch (e) {
+                console.error('Failed to create contact:', e);
+                // Continue sending welcome email even if contact storage fails
+            }
+        }
+
+        // 2. Send Welcome Email
         const { data, error } = await resend.emails.send({
             from: MARKETING_EMAILS.welcome.from,
             to: email,
             subject: MARKETING_EMAILS.welcome.subject,
             react: WelcomeEmail({ email }),
+            // headers: { 'List-Unsubscribe': ... } // Resend handles this if using Audiences or can be added manually
         });
 
         if (error) {
             console.error('Resend Error:', error);
             return NextResponse.json({ error: error.message }, { status: 500 });
         }
-
-        // 2. (Optional) Create Contact in Resend Audience
-        // For now we just send the email, but you can uncomment this to store contacts in Resend
-        /*
-        await resend.contacts.create({
-          email: email,
-          firstName: '',
-          lastName: '',
-          unsubscribed: false,
-          audienceId: 'YOUR_AUDIENCE_ID'
-        });
-        */
 
         return NextResponse.json({ success: true, data });
     } catch (error) {
