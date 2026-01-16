@@ -43,17 +43,26 @@ export default async function VsPage({ params }: Props) {
 
   const comparisonData = tool.rich_features?.comparison_table;
 
+  // 定义对比表值的类型
+  type ComparisonValue = {
+    open_source?: string;
+    competitor?: string;
+    saas_value?: string;
+    os_value?: string;
+  };
+
   let comparisons: { feature: string; saas_value: string; os_value: string }[] = [];
 
   if (comparisonData) {
     // 将数据库中的 Record<string, ...> 转换为数组格式
-    comparisons = Object.entries(comparisonData).map(([key, val]) => ({
-      feature: key,
-      // @ts-expect-error 处理潜在的类型不一致（只要有值就行）
-      saas_value: val.competitor || val.saas_value || "N/A",
-      // @ts-expect-error 处理潜在的类型不一致
-      os_value: val.open_source || val.os_value || "Yes"
-    }));
+    comparisons = Object.entries(comparisonData).map(([key, val]) => {
+      const v = val as ComparisonValue;
+      return {
+        feature: key,
+        saas_value: v.competitor || v.saas_value || "N/A",
+        os_value: v.open_source || v.os_value || "Yes"
+      };
+    });
   } else {
     // 默认值
     comparisons = [
