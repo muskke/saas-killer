@@ -45,7 +45,7 @@ const ADS: AdConfig[] = [
     desc: "Don't stay on localhost. Grab a .com for $5.98/yr.",
     icon: Globe,
     gradient: "from-orange-500 via-red-500 to-pink-600",
-    link: "https://namecheap.pxf.io/c/YOUR_IMPACT_ID", // 👈 替换为你的 Impact ID
+    link: "https://namecheap.pxf.io/c/6846567", // 👈 替换为你的 Impact ID
     btnText: "Search Domains",
   },
   // 2. 后端/VPS -> Vultr (直接现金 $35)
@@ -57,7 +57,7 @@ const ADS: AdConfig[] = [
     desc: "Spin up a high-performance SSD VPS or Managed Database in seconds.",
     icon: Database,
     gradient: "from-blue-600 via-indigo-500 to-purple-500",
-    link: "https://www.vultr.com/?ref=YOUR_VULTR_REF", // 👈 替换为你的 Vultr 推荐码
+    link: "https://www.vultr.com/?ref=9854264", // ✅ 已配置
     btnText: "Get $100 Credit",
   },
   // 3. 邮件/营销 -> Brevo (PartnerStack 平台)
