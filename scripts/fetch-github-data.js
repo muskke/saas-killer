@@ -112,6 +112,62 @@ const SEARCH_QUERIES = generateSearchQueries();
 // 建议设置为 5-10。太大容易导致 AI 响应超时或 JSON 截断。
 const BATCH_SIZE = parseInt(process.env.BATCH_SIZE) || 8;
 
+// 🔧 JSON 修复函数 - 处理 AI 返回的不完整 JSON
+function tryRepairJson(rawJson) {
+  let json = rawJson.trim();
+
+  // 1. 移除可能的行内注释 (// ...)
+  json = json.replace(/\/\/[^\n]*/g, '');
+
+  // 2. 移除尾随逗号 (JSON 标准不允许)
+  json = json.replace(/,(\s*[}\]])/g, '$1');
+
+  // 3. 尝试闭合未完成的 JSON
+  // 统计左右括号数量
+  let openBraces = (json.match(/{/g) || []).length;
+  let closeBraces = (json.match(/}/g) || []).length;
+  let openBrackets = (json.match(/\[/g) || []).length;
+  let closeBrackets = (json.match(/]/g) || []).length;
+
+  // 4. 如果 JSON 在字符串中间截断，尝试闭合字符串
+  // 检查是否有未闭合的字符串 (简单检测：奇数个双引号)
+  const quoteCount = (json.match(/(?<!\\)"/g) || []).length;
+  if (quoteCount % 2 !== 0) {
+    // 找到最后一个引号的位置，截断到那里，然后重新闭合
+    const lastQuoteIndex = json.lastIndexOf('"');
+    if (lastQuoteIndex > 0) {
+      // 回退到最后一个完整的 key-value 对
+      const lastCompleteComma = json.lastIndexOf(',', lastQuoteIndex);
+      const lastCompleteBrace = json.lastIndexOf('}', lastQuoteIndex);
+      const cutPoint = Math.max(lastCompleteComma, lastCompleteBrace);
+
+      if (cutPoint > 0) {
+        json = json.substring(0, cutPoint + 1);
+        // 重新计算括号
+        openBraces = (json.match(/{/g) || []).length;
+        closeBraces = (json.match(/}/g) || []).length;
+        openBrackets = (json.match(/\[/g) || []).length;
+        closeBrackets = (json.match(/]/g) || []).length;
+      }
+    }
+  }
+
+  // 5. 修正尾随逗号 (再次处理，因为可能截断后产生新的尾随逗号)
+  json = json.replace(/,(\s*)$/g, '$1');
+
+  // 6. 闭合括号
+  while (closeBrackets < openBrackets) {
+    json += ']';
+    closeBrackets++;
+  }
+  while (closeBraces < openBraces) {
+    json += '}';
+    closeBraces++;
+  }
+
+  return json;
+}
+
 // 辅助函数：将数组切块
 function chunkArray(array, size) {
   const chunks = [];
@@ -295,19 +351,52 @@ async function analyzeBatchWithAI(repos) {
         .replace(/```/g, "")
         .trim();
 
-      // 2. 解析清洗后的内容
-      return JSON.parse(cleanContent);
+      // 2. 首先尝试直接解析
+      try {
+        return JSON.parse(cleanContent);
+      } catch (parseError) {
+        // 3. 如果直接解析失败，尝试修复 JSON
+        console.warn(`⚠️  JSON parse failed, attempting repair...`);
+        console.warn(`   Parse error: ${parseError.message}`);
+
+        const repairedJson = tryRepairJson(cleanContent);
+
+        try {
+          const result = JSON.parse(repairedJson);
+          console.log(`✅ JSON repair successful!`);
+          return result;
+        } catch (repairError) {
+          // 修复也失败了，抛出原始错误让外层重试
+          console.error(`❌ JSON repair also failed: ${repairError.message}`);
+          throw parseError;
+        }
+      }
     } catch (error) {
       attempt++;
+
+      // 🔍 更详细的错误分类
+      const isJsonError = error.message.includes('JSON') ||
+        error.message.includes('Unexpected token') ||
+        error.message.includes('Unterminated');
+      const isApiError = error.message.includes('auth') ||
+        error.message.includes('rate') ||
+        error.status === 401 ||
+        error.status === 429;
+
       console.error(
         `❌ AI Batch Error (Attempt ${attempt}/${MAX_RETRIES}):`,
         error.message
       );
 
+      if (isJsonError) {
+        console.warn(`   💡 Tip: This is a JSON parsing error. The AI response may have been truncated.`);
+        console.warn(`   💡 Consider reducing BATCH_SIZE (current: ${BATCH_SIZE}) to get shorter responses.`);
+      }
+
       // 如果是特定的认证错误，重试可能没用，建议检查配置
-      if (error.message.includes("auth_unavailable") || error.status === 401) {
+      if (isApiError) {
         console.warn(
-          "⚠️  Warning: This looks like an API Key issue. Check your .env file!"
+          "⚠️  Warning: This looks like an API Key or rate limit issue. Check your .env file!"
         );
       }
 
