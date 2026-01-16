@@ -52,6 +52,7 @@ export const metadata: Metadata = {
 };
 
 import Footer from "@/components/Footer";
+import GoogleAdSense from "@/components/GoogleAdSense";
 
 export default function RootLayout({
   children,
@@ -70,6 +71,7 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased pt-16 transition-colors duration-300 flex flex-col min-h-screen`}
         suppressHydrationWarning
       >
+        <GoogleAdSense />
         <ThemeProvider defaultTheme="dark" storageKey="saas-killer-theme">
           <Navbar />
           <div className="flex-grow bg-gray-50 dark:bg-zinc-950">
