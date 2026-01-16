@@ -51,7 +51,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       images: [tool.logo || "/default-cover.png"], // 最好有个默认封面
     },
     alternates: {
-      canonical: `/${slug}`,
+      canonical: `/alternatives/${slug}`,
     },
   };
 }
@@ -198,6 +198,7 @@ export default async function Page({ params }: Props) {
                 <a
                   href={tool.url}
                   target="_blank"
+                  rel="noopener noreferrer nofollow"
                   className="flex items-center justify-center gap-2 bg-gray-900 hover:bg-black text-white px-8 py-4 rounded-xl font-bold transition-all shadow-xl shadow-gray-200 hover:-translate-y-1"
                 >
                   Visit Official Website <ExternalLink size={18} />

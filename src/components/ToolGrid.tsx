@@ -246,6 +246,7 @@ const SponsoredCard = () => {
           <a
             href="https://m.do.co/c/YOUR_AFFILIATE_CODE"
             target="_blank"
+            rel="noopener noreferrer nofollow"
             className="mt-auto w-full group/btn relative flex items-center justify-center gap-2 overflow-hidden bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-400 hover:to-purple-500 text-white font-bold py-4 rounded-2xl transition-all active:scale-95 shadow-lg shadow-indigo-500/25"
           >
             {/* Button Shine Effect */}
@@ -263,11 +264,11 @@ const SponsoredCard = () => {
 }
 
 
-export default function ToolGrid({ tools }: { tools: Tool[] }) {
+export default function ToolGrid({ tools, initialCategory = 'All' }: { tools: Tool[], initialCategory?: string }) {
   const [search, setSearch] = useState('');
   const [deferredSearch, setDeferredSearch] = useState('');
   const [isPending, startTransition] = useTransition();
-  const [activeParent, setActiveParent] = useState('All');
+  const [activeParent, setActiveParent] = useState(initialCategory);
   const [activeSub, setActiveSub] = useState('All');
   const [displayCount, setDisplayCount] = useState(23); // 23 + 1 赞助商卡片 = 24（3的倍数）
 

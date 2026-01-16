@@ -29,6 +29,9 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   return {
     title: `${competitor} vs ${tool.name}: The Honest Comparison (2026)`,
     description: `See how much you save by switching from ${competitor} to ${tool.name}. Full feature comparison and ROI calculator inside.`,
+    alternates: {
+      canonical: `/vs/${slug}`,
+    },
   };
 }
 
@@ -182,6 +185,7 @@ export default async function VsPage({ params }: Props) {
               <a
                 href={trackableUrl}
                 target="_blank"
+                rel="noopener noreferrer nofollow"
                 className="block w-full text-center bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 rounded-xl transition-all shadow-lg hover:shadow-indigo-200 dark:hover:shadow-indigo-900/50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
               >
                 Get {tool.name} Now

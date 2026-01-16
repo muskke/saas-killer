@@ -1,5 +1,6 @@
 import { MetadataRoute } from "next";
 import { getAllTools } from "@/lib/db";
+import { TAXONOMY_ARRAY } from "@/lib/taxonomy";
 
 // 🔥 这里的 URL 必须换成你 Vercel 部署后的真实域名！
 const BASE_URL =
@@ -29,20 +30,10 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: 0.8, // 详情页权重次之
   }));
 
-  // 4. 分类页面 (修复核心)
-  // Step A: 过滤掉 null/undefined/空字符串
-  const rawCategories = tools
-    .map((t) => t.category)
-    .filter((c) => c && c.trim() !== "");
-
-  // Step B: 去重
-  const categories = Array.from(new Set(rawCategories));
-
-  const categoryPages: MetadataRoute.Sitemap = categories.map((cat) => ({
-    // 🔥 核心修复：encodeURIComponent
-    // 它会把 "Creative & Office" 变成 "Creative%20%26%20Office"
-    // 这样 XML 就不会报错了！
-    url: `${BASE_URL}/category/${encodeURIComponent(cat.trim().toLowerCase())}`,
+  // 4. 分类页面 (使用标准 Taxonomy)
+  const categoryPages: MetadataRoute.Sitemap = TAXONOMY_ARRAY.map((cat) => ({
+    // 使用 cat.id (例如 "Dev", "Business")
+    url: `${BASE_URL}/category/${encodeURIComponent(cat.id.toLowerCase())}`,
     lastModified: new Date(),
     changeFrequency: "weekly" as const,
     priority: 0.7,
@@ -58,4 +49,5 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   }));
 
   return [...staticPages, ...categoryPages, ...dynamicPages, ...vsPages];
+  // return [...staticPages, ...dynamicPages, ...vsPages];
 }

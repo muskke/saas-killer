@@ -7,7 +7,7 @@ export default function robots(): MetadataRoute.Robots {
     rules: {
       userAgent: '*',
       allow: '/',
-      disallow: '/private/', // 如果以后有后台管理页，屏蔽掉
+      disallow: ['/private/', '/admin/', '/api/'],
     },
     sitemap: `${BASE_URL}/sitemap.xml`,
   };

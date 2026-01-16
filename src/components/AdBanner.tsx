@@ -369,7 +369,7 @@ export default function AdBanner({ category = "" }: { category?: string }) {
         <a
           href={trackableLink}
           target="_blank"
-          rel="noopener noreferrer"
+          rel="noopener noreferrer nofollow"
           className="group/btn relative inline-flex items-center gap-2 overflow-hidden rounded-full bg-indigo-600 dark:bg-white px-8 py-3.5 text-sm font-bold text-white dark:text-gray-900 transition-all hover:bg-indigo-700 dark:hover:bg-gray-50 hover:shadow-lg w-full md:w-auto justify-center z-10"
         >
           {/* 按钮内的流光动画 */}
