@@ -311,14 +311,14 @@ export default function AdBanner({ category = "" }: { category?: string }) {
   if (!isVisible || !mounted) return null;
 
   return (
-    <div className="relative group my-12 w-full transform transition-all hover:scale-[1.01]">
+    <div className="relative group my-6 md:my-12 w-full transform transition-all hover:scale-[1.01]">
       {/* 1. 动态光晕背景 (Glow Effect) */}
       <div
         className={`absolute -inset-0.5 rounded-2xl bg-gradient-to-r ${ad.gradient} opacity-50 dark:opacity-75 blur transition duration-1000 group-hover:opacity-80 dark:group-hover:opacity-100 group-hover:duration-200`}
       ></div>
 
       {/* 2. 主卡片容器 - 主题自适应 */}
-      <div className="relative flex flex-col md:flex-row items-center justify-between gap-6 rounded-2xl bg-white dark:bg-zinc-900/90 backdrop-blur-md border border-gray-200 dark:border-white/10 px-6 py-6 md:px-8 shadow-xl dark:shadow-2xl overflow-hidden">
+      <div className="relative flex flex-col md:flex-row items-center justify-between gap-4 md:gap-6 rounded-2xl bg-white dark:bg-zinc-900/90 backdrop-blur-md border border-gray-200 dark:border-white/10 px-4 py-5 md:px-8 md:py-6 shadow-xl dark:shadow-2xl overflow-hidden">
         {/* 背景纹理 (Noise Texture) */}
         <div
           className="absolute inset-0 opacity-[0.02] dark:opacity-[0.03] pointer-events-none"

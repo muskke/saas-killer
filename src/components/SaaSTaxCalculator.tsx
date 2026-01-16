@@ -33,17 +33,16 @@ export default function SaaSTaxCalculator({
 
   // 🔥 构造带有追踪参数的 URL
   // 逻辑：如果原 URL 已有 ? 则加 &，否则加 ?
-  const trackableUrl = `${toolUrl}${
-    toolUrl.includes("?") ? "&" : "?"
-  }utm_source=saas-killer&utm_medium=directory&utm_content=calculator`;
+  const trackableUrl = `${toolUrl}${toolUrl.includes("?") ? "&" : "?"
+    }utm_source=saas-killer&utm_medium=directory&utm_content=calculator`;
 
   return (
-    <div className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-3xl p-6 md:p-8 text-white shadow-2xl border border-gray-700 relative overflow-hidden mb-16 isolate">
+    <div className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-3xl p-4 md:p-8 text-white shadow-2xl border border-gray-700 relative overflow-hidden mb-12 md:mb-16 isolate">
       {/* 背景光效 */}
       <div className="absolute top-0 right-0 w-96 h-96 bg-indigo-500/20 rounded-full blur-3xl -mr-32 -mt-32 pointer-events-none -z-10"></div>
       <div className="absolute bottom-0 left-0 w-64 h-64 bg-red-500/10 rounded-full blur-3xl -ml-20 -mb-20 pointer-events-none -z-10"></div>
 
-      <div className="relative z-10 grid lg:grid-cols-2 gap-12 items-center">
+      <div className="relative z-10 grid lg:grid-cols-2 gap-8 md:gap-12 items-center">
         {/* === 左侧：控制面板 === */}
         <div>
           <div className="flex items-center gap-2 mb-2 text-indigo-400 font-bold uppercase tracking-wider text-xs">
@@ -138,7 +137,7 @@ export default function SaaSTaxCalculator({
             <div className="text-xs font-black uppercase tracking-widest text-gray-400 mb-1">
               Estimated Annual Waste
             </div>
-            <div className="text-5xl md:text-6xl font-black text-gray-900 tracking-tighter tabular-nums">
+            <div className="text-4xl sm:text-5xl md:text-6xl font-black text-gray-900 tracking-tighter tabular-nums">
               ${yearlyCost.toLocaleString()}
             </div>
           </div>

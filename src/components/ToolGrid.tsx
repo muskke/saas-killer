@@ -106,7 +106,7 @@ const ToolCard = ({ tool, categoryColor, index }: { tool: Tool; categoryColor: s
           <div className="absolute -top-16 -right-16 w-32 h-32 bg-gradient-to-br from-indigo-500/20 via-purple-500/10 to-transparent rounded-full blur-2xl" />
         </div>
 
-        <div className="relative p-6 flex-grow z-20 flex flex-col">
+        <div className="relative p-4 sm:p-6 flex-grow z-20 flex flex-col">
           {/* Header: Logo & Badges */}
           <div className="flex justify-between items-start mb-5">
             {/* Logo with Glow Effect */}
@@ -172,8 +172,8 @@ const ToolCard = ({ tool, categoryColor, index }: { tool: Tool; categoryColor: s
             </div>
 
             {/* Arrow Button */}
-            <div className="w-9 h-9 rounded-full flex items-center justify-center bg-gray-100 dark:bg-white/5 text-gray-400 group-hover:bg-gradient-to-r group-hover:from-indigo-500 group-hover:to-purple-600 group-hover:text-white transition-all duration-500 transform group-hover:rotate-[-45deg] group-hover:scale-110 group-hover:shadow-lg group-hover:shadow-indigo-500/25">
-              <ArrowRight size={16} />
+            <div className="w-10 h-10 rounded-full flex items-center justify-center bg-gray-100 dark:bg-white/5 text-gray-400 group-hover:bg-gradient-to-r group-hover:from-indigo-500 group-hover:to-purple-600 group-hover:text-white transition-all duration-500 transform group-hover:rotate-[-45deg] group-hover:scale-110 group-hover:shadow-lg group-hover:shadow-indigo-500/25">
+              <ArrowRight size={18} />
             </div>
           </div>
         </div>
@@ -332,7 +332,7 @@ export default function ToolGrid({ tools }: { tools: Tool[] }) {
   };
 
   return (
-    <div className="max-w-7xl mx-auto px-4 py-12 relative z-10">
+    <div className="max-w-7xl mx-auto px-3 sm:px-4 py-8 md:py-12 relative z-10">
 
       {/* 🔍 Search & Filter Section */}
       <div className="mb-12 space-y-6">
@@ -420,7 +420,7 @@ export default function ToolGrid({ tools }: { tools: Tool[] }) {
 
       {/* 📦 Tool Grid - min-height prevents CLS on load more */}
       {filteredTools.length > 0 ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 min-h-[600px]">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6 min-h-[600px]">
           <SponsoredCard />
           {visibleTools.map((tool, index) => (
             <ToolCard key={tool.slug} tool={tool} categoryColor={getCategoryTheme(tool.category)} index={index} />

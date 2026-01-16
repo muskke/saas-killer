@@ -49,7 +49,7 @@ export default async function Home() {
       <JsonLd schema={websiteSchema} />
 
       {/* Hero Section - Compact Premium Design */}
-      <section className="relative py-16 md:py-24 px-4 text-center overflow-hidden">
+      <section className="relative py-12 md:py-20 lg:py-24 px-4 text-center overflow-hidden">
         {/* Background Layer */}
         <div className="absolute inset-0 z-0">
           <div className="absolute inset-0 bg-slate-900 dark:bg-zinc-950"></div>
@@ -70,12 +70,12 @@ export default async function Home() {
           {/* Reverting to Next.js Image for Automatic Optimization if configured */}
 
           <div className="absolute inset-0 bg-gradient-to-b from-slate-900/40 via-slate-900/60 to-slate-900/90 dark:from-zinc-950/30 dark:via-zinc-950/60 dark:to-zinc-950"></div>
-          <div className="hidden dark:block absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[400px] bg-indigo-500/20 rounded-full blur-[100px] opacity-60"></div>
+          <div className="hidden dark:block absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[400px] bg-indigo-500/20 rounded-full blur-[100px] opacity-60 pointer-events-none"></div>
         </div>
 
         <div className="max-w-4xl mx-auto relative z-10">
           {/* Badge - 更精简 */}
-          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/10 border border-white/20 text-white/90 text-xs font-medium mb-6 backdrop-blur-sm">
+          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/10 border border-white/20 text-white/90 text-xs font-medium mb-6 backdrop-blur-sm shadow-lg">
             <span className="relative flex h-1.5 w-1.5">
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
               <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-green-500"></span>
@@ -84,13 +84,13 @@ export default async function Home() {
           </div>
 
           {/* Headline - 字号略微缩小 */}
-          <h1 className="text-4xl md:text-6xl lg:text-7xl font-black mb-4 tracking-tight leading-tight text-white drop-shadow-lg">
+          <h1 className="text-3xl sm:text-4xl md:text-6xl lg:text-7xl font-black mb-4 tracking-tight leading-tight text-white drop-shadow-lg">
             Stop Paying{' '}
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 via-orange-500 to-pink-500">SaaS Rent.</span>
           </h1>
 
           {/* Subheadline - 间距减少 */}
-          <p className="text-base md:text-lg text-gray-300 dark:text-zinc-400 max-w-xl mx-auto leading-relaxed">
+          <p className="text-sm sm:text-base md:text-lg text-gray-300 dark:text-zinc-400 max-w-xl mx-auto leading-relaxed px-4">
             Curated directory of <span className="text-white font-semibold">Open Source Alternatives</span>.
             Privacy-focused. Self-hosted. No hidden fees.
           </p>

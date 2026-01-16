@@ -117,7 +117,7 @@ export default async function Page({ params }: Props) {
   };
 
   return (
-    <main className="min-h-screen bg-[#F9FAFB] pb-20">
+    <main className="min-h-screen bg-gray-50 dark:bg-zinc-950 pb-20">
       <JsonLd schema={softwareSchema} />
       <JsonLd schema={breadcrumbSchema} />
       {/* 1. 顶部面包屑/返回 */}
@@ -132,7 +132,7 @@ export default async function Page({ params }: Props) {
 
       <div className="max-w-7xl mx-auto px-4">
         {/* 🔥 终极融合卡片：Hero + Showcase */}
-        <div className="bg-white rounded-3xl shadow-sm border border-gray-100 mb-8 relative overflow-hidden">
+        <div className="bg-white dark:bg-zinc-900 rounded-3xl shadow-sm border border-gray-100 dark:border-zinc-800 mb-8 relative overflow-hidden">
           {/* 背景装饰：巨大的模糊 Logo 投影，贯穿整个卡片 */}
           {tool.logo && (
             <div className="absolute -right-20 -top-20 opacity-[0.03] pointer-events-none select-none">
@@ -149,7 +149,7 @@ export default async function Page({ params }: Props) {
             <div className="flex flex-col lg:flex-row justify-between items-start gap-8 mb-10">
               <div className="flex gap-6 items-start">
                 {/* Logo */}
-                <div className="w-24 h-24 rounded-2xl bg-gray-50 border border-gray-100 flex items-center justify-center overflow-hidden shrink-0 shadow-inner p-2">
+                <div className="w-24 h-24 rounded-2xl bg-gray-50 dark:bg-zinc-800 border border-gray-100 dark:border-zinc-700 flex items-center justify-center overflow-hidden shrink-0 shadow-inner p-2">
                   {tool.logo ? (
                     <img
                       src={tool.logo}
@@ -165,7 +165,7 @@ export default async function Page({ params }: Props) {
 
                 {/* 标题与核心对标 */}
                 <div className="space-y-2">
-                  <h1 className="text-4xl md:text-5xl font-black text-gray-900 tracking-tight">
+                  <h1 className="text-3xl md:text-5xl font-black text-gray-900 dark:text-white tracking-tight">
                     {tool.name}
                   </h1>
 
@@ -221,21 +221,21 @@ export default async function Page({ params }: Props) {
             <div className="w-full h-px bg-gradient-to-r from-transparent via-gray-200 to-transparent mb-10"></div>
 
             {/* --- 下半部：简介与场景 (Showcase) --- */}
-            <div className="grid lg:grid-cols-3 gap-12">
+            <div className="grid lg:grid-cols-3 gap-8 md:gap-12">
               {/* 左侧：深度文案 (Story) */}
               <div className="lg:col-span-2 space-y-5">
-                <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2">
+                <h2 className="text-xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
                   <span className="text-2xl">🧐</span> What is {tool.name}?
                 </h2>
 
-                <div className="prose prose-lg text-gray-600 leading-relaxed">
+                <div className="prose prose-lg text-gray-600 dark:text-gray-300 leading-relaxed">
                   <p>
                     {/* 优先显示 AI 长简介，兜底显示普通描述 */}
                     {tool.rich_features?.long_summary || tool.description}
                   </p>
                 </div>
 
-                <div className="bg-indigo-50/50 rounded-xl p-4 border border-indigo-100 text-indigo-900 text-sm font-medium inline-block">
+                <div className="bg-indigo-50/50 dark:bg-indigo-950/30 rounded-xl p-4 border border-indigo-100 dark:border-indigo-800 text-indigo-900 dark:text-indigo-200 text-sm font-medium inline-block">
                   💡 <strong>Bottom Line:</strong> Use this if you want
                   <span className="mx-1 underline decoration-indigo-300 decoration-2 underline-offset-2">
                     {tool.rich_features?.best_for?.toLowerCase()}
@@ -461,7 +461,7 @@ export default async function Page({ params }: Props) {
                     {/* 卡片内的光效 */}
                     <div className="absolute -top-10 -right-10 w-20 h-20 bg-indigo-500/30 blur-2xl rounded-full group-hover/chart:bg-indigo-400/40 transition-colors"></div>
 
-                    <div className="flex items-end gap-8">
+                    <div className="flex items-end justify-center md:justify-start gap-4 md:gap-8">
                       {/* Column 1: SaaS Cost (Bad) */}
                       <div className="flex flex-col items-center gap-3 group/bar">
                         <div className="text-center">

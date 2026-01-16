@@ -5,14 +5,14 @@ import React from 'react';
 const Footer = () => {
     return (
         <footer className="w-full border-t border-gray-200/50 dark:border-white/5 bg-gray-50 dark:bg-zinc-950 mt-auto">
-            <div className="max-w-7xl mx-auto px-6 py-8 flex flex-col md:flex-row items-center justify-between gap-4">
+            <div className="max-w-7xl mx-auto px-6 py-8 flex flex-col md:flex-row items-center justify-between gap-6 md:gap-4">
                 {/* Left: Brand & Slogan */}
                 <div className="flex flex-col md:flex-row items-center gap-2 md:gap-4 text-center md:text-left">
                     <span className="font-bold text-gray-900 dark:text-white tracking-tight">SaaS Killer</span>
                     <span className="hidden md:inline-block w-1 h-1 rounded-full bg-gray-300 dark:bg-zinc-700" />
-                    <span className="text-sm text-gray-500 dark:text-zinc-500 font-medium">Stop paying monthly rent for software you can own.</span>
+                    <span className="text-sm text-gray-500 dark:text-zinc-500 font-medium max-w-[200px] md:max-w-none mx-auto md:mx-0">Stop paying monthly rent for software you can own.</span>
                     <span className="hidden md:inline-block w-px h-3 bg-gray-200 dark:bg-zinc-800 mx-2" />
-                    <span className="text-xs text-gray-400 dark:text-zinc-600">&copy; {new Date().getFullYear()}</span>
+                    <span className="text-xs text-gray-400 dark:text-zinc-600 mt-2 md:mt-0">&copy; {new Date().getFullYear()}</span>
                 </div>
 
                 {/* Right: Chaos Meme Intelligence Link - 极简文字风格 */}
