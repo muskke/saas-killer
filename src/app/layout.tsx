@@ -32,17 +32,22 @@ export const metadata: Metadata = {
     description: "Curated directory of open-source alternatives. Self-host, save money, own your data.",
     type: "website",
     locale: "en_US",
-    images: ["/logo.svg"],
+    images: ["/og-image.png"],
   },
   twitter: {
     card: "summary_large_image",
     title: "SaaS Killer - Best Open Source Alternatives",
     description: "Curated directory of open-source alternatives to expensive SaaS.",
-    images: ["/logo.svg"],
+    images: ["/og-image.png"],
   },
   robots: {
     index: true,
     follow: true,
+  },
+  metadataBase: new URL(process.env.NEXT_PUBLIC_BASE_URL || "https://saas-killer.chaos-meme.cn"),
+  manifest: "/manifest.json",
+  other: {
+    "msapplication-TileColor": "#6366f1",
   },
 };
 
@@ -55,6 +60,12 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
+      <head>
+        {/* Preconnect hints for faster external resource loading */}
+        <link rel="preconnect" href="https://avatars.githubusercontent.com" />
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="dns-prefetch" href="https://avatars.githubusercontent.com" />
+      </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased pt-16 transition-colors duration-300 flex flex-col min-h-screen`}
         suppressHydrationWarning

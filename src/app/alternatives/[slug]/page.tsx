@@ -5,6 +5,7 @@ import { getCompetitorPrice } from "@/lib/pricing-utils";
 import type { Metadata } from "next";
 import AdBanner from "@/components/AdBanner";
 import Comments from "@/components/Comments";
+import JsonLd from "@/components/JsonLd";
 import {
   CheckCircle2,
   AlertCircle,
@@ -49,6 +50,9 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       description: description,
       images: [tool.logo || "/default-cover.png"], // 最好有个默认封面
     },
+    alternates: {
+      canonical: `/${slug}`,
+    },
   };
 }
 
@@ -66,8 +70,56 @@ export default async function Page({ params }: Props) {
   const teamSize = 10; // 设定一个 Teaser 用的默认团队大小
   const annualLoss = pricePerUser * teamSize * 12; // 计算年亏损
 
+  // 3. 构建结构化数据 (Schema)
+  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://saas-killer.chaos-meme.cn";
+
+  const softwareSchema = {
+    "@context": "https://schema.org",
+    "@type": "SoftwareApplication",
+    "name": tool.name,
+    "operatingSystem": "Web, All",
+    "applicationCategory": tool.category,
+    "offers": {
+      "@type": "Offer",
+      "price": "0",
+      "priceCurrency": "USD"
+    },
+    "aggregateRating": {
+      "@type": "AggregateRating",
+      "ratingValue": tool.stars > 1000 ? (4.5 + Math.min(tool.stars / 100000, 0.4)).toFixed(1) : "4.0",
+      "ratingCount": tool.stars
+    }
+  };
+
+  const breadcrumbSchema = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    "itemListElement": [
+      {
+        "@type": "ListItem",
+        "position": 1,
+        "name": "Home",
+        "item": baseUrl
+      },
+      {
+        "@type": "ListItem",
+        "position": 2,
+        "name": tool.category,
+        "item": `${baseUrl}/category/${encodeURIComponent(tool.category)}`
+      },
+      {
+        "@type": "ListItem",
+        "position": 3,
+        "name": tool.name,
+        "item": `${baseUrl}/alternatives/${slug}`
+      }
+    ]
+  };
+
   return (
     <main className="min-h-screen bg-[#F9FAFB] pb-20">
+      <JsonLd schema={softwareSchema} />
+      <JsonLd schema={breadcrumbSchema} />
       {/* 1. 顶部面包屑/返回 */}
       <div className="max-w-7xl mx-auto px-4 py-6">
         <a

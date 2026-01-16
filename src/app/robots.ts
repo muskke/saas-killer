@@ -1,6 +1,6 @@
 import { MetadataRoute } from 'next';
 
-const BASE_URL = 'https://your-project-name.vercel.app'; // 👈 记得改这里！
+const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || 'https://saas-killer.chaos-meme.cn';
 
 export default function robots(): MetadataRoute.Robots {
   return {

@@ -1,0 +1,16 @@
+{
+    "name": "SaaS Killer - Open Source Alternatives",
+    "short_name": "SaaS Killer",
+    "description": "Curated directory of open-source alternatives to expensive SaaS. Self-host, save money, own your data.",
+    "start_url": "/",
+    "display": "standalone",
+    "background_color": "#0a0a0a",
+    "theme_color": "#6366f1",
+    "icons": [
+        {
+            "src": "/logo.svg",
+            "sizes": "any",
+            "type": "image/svg+xml"
+        }
+    ]
+}

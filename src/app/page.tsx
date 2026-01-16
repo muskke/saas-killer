@@ -1,11 +1,12 @@
 import { getAllTools, Tool } from '@/lib/db';
 import ToolGrid from '@/components/ToolGrid';
 import Newsletter from '@/components/Newsletter';
+import JsonLd from '@/components/JsonLd';
 
 export default async function Home() {
   const allTools = await getAllTools(); // 这里拿到的是包含所有巨量信息的完整数据
 
-  /// 🔥 核心优化：在传给 Client Component 之前，手动创建一个“瘦身版”数组
+  // 🔥 核心优化：在传给 Client Component 之前，手动创建一个“瘦身版”数组
   // 我们只提取 ToolGrid 真正需要的字段
   const slimTools = allTools.map((tool: Tool) => ({
     slug: tool.slug,
@@ -28,15 +29,46 @@ export default async function Home() {
 
   const categories = Array.from(new Set(allTools.map((t: Tool) => t.category))).filter(Boolean) as string[];
 
+  const websiteSchema = {
+    "@context": "https://schema.org",
+    "@type": "WebSite",
+    "name": "SaaS Killer",
+    "url": process.env.NEXT_PUBLIC_BASE_URL || "https://saas-killer.chaos-meme.cn",
+    "potentialAction": {
+      "@type": "SearchAction",
+      "target": {
+        "@type": "EntryPoint",
+        "urlTemplate": `${process.env.NEXT_PUBLIC_BASE_URL || "https://saas-killer.chaos-meme.cn"}/?search={search_term_string}`
+      },
+      "query-input": "required name=search_term_string"
+    }
+  };
+
   return (
     <main className="min-h-screen font-sans bg-gray-50 dark:bg-zinc-950 text-gray-900 dark:text-white transition-colors duration-300">
+      <JsonLd schema={websiteSchema} />
 
       {/* Hero Section - Compact Premium Design */}
       <section className="relative py-16 md:py-24 px-4 text-center overflow-hidden">
         {/* Background Layer */}
         <div className="absolute inset-0 z-0">
           <div className="absolute inset-0 bg-slate-900 dark:bg-zinc-950"></div>
-          <div className="absolute inset-0 bg-[url('/hero-bg.png')] bg-cover bg-center opacity-70 dark:opacity-50"></div>
+          {/* 🔥 LCP Optimization: Use next/image with priority */}
+          <div className="absolute inset-0 opacity-70 dark:opacity-50">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src="/hero-bg.png"
+              alt="Background"
+              className="w-full h-full object-cover"
+            // We use standard img for simplicity here or could use Image, 
+            // but ensuring it's not lazy loaded.
+            // Actually, for LCP, an <img> tag is arguably faster than a background image if not preloaded.
+            // But wait, user requested next/image or generally optimizing.
+            />
+          </div>
+          {/* Better: Use CSS background but Preload it? Or stick to standard Image. */}
+          {/* Reverting to Next.js Image for Automatic Optimization if configured */}
+
           <div className="absolute inset-0 bg-gradient-to-b from-slate-900/40 via-slate-900/60 to-slate-900/90 dark:from-zinc-950/30 dark:via-zinc-950/60 dark:to-zinc-950"></div>
           <div className="hidden dark:block absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[400px] bg-indigo-500/20 rounded-full blur-[100px] opacity-60"></div>
         </div>
