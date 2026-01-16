@@ -58,6 +58,7 @@ export const metadata: Metadata = {
 
 import Footer from "@/components/Footer";
 import GoogleAdSense from "@/components/GoogleAdSense";
+import GoogleAnalytics from "@/components/GoogleAnalytics";
 
 export default function RootLayout({
   children,
@@ -77,6 +78,7 @@ export default function RootLayout({
         suppressHydrationWarning
       >
         <GoogleAdSense />
+        <GoogleAnalytics />
         <ThemeProvider defaultTheme="dark" storageKey="saas-killer-theme">
           <Navbar />
           <div className="flex-grow bg-gray-50 dark:bg-zinc-950">
