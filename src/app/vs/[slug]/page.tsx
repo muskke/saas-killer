@@ -81,12 +81,12 @@ export default async function VsPage({ params }: Props) {
     }utm_source=saas-killer&utm_medium=directory&utm_content=vs-card`;
 
   return (
-    <main className="min-h-screen bg-gray-50 pb-20">
+    <main className="min-h-screen bg-gray-50 dark:bg-zinc-950 pb-20">
       {/* 顶部导航 */}
       <div className="max-w-7xl mx-auto px-4 py-6">
         <Link
           href={`/alternatives/${tool.slug}`}
-          className="text-sm text-gray-500 hover:text-indigo-600 font-bold"
+          className="text-sm text-gray-500 dark:text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400 font-bold transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500 rounded"
         >
           ← Back to {tool.name} Overview
         </Link>
@@ -95,17 +95,17 @@ export default async function VsPage({ params }: Props) {
       <div className="max-w-5xl mx-auto px-4">
         {/* 1. 擂台头部 */}
         <div className="text-center mb-16 space-y-4">
-          <div className="inline-block bg-indigo-100 text-indigo-700 px-4 py-1 rounded-full text-sm font-bold tracking-wide uppercase">
+          <div className="inline-block bg-indigo-100 dark:bg-indigo-500/20 text-indigo-700 dark:text-indigo-300 px-4 py-1 rounded-full text-sm font-bold tracking-wide uppercase">
             The Showdown
           </div>
-          <h1 className="text-4xl md:text-6xl font-black text-gray-900 leading-tight">
+          <h1 className="text-4xl md:text-6xl font-black text-gray-900 dark:text-white leading-tight">
             <span className="text-red-500 line-through decoration-4 decoration-red-300 opacity-60">
               {competitor}
             </span>
-            <span className="mx-4 text-gray-300">vs</span>
-            <span className="text-indigo-600">{tool.name}</span>
+            <span className="mx-4 text-gray-300 dark:text-gray-600">vs</span>
+            <span className="text-indigo-600 dark:text-indigo-400">{tool.name}</span>
           </h1>
-          <p className="text-xl text-gray-600 max-w-2xl mx-auto">
+          <p className="text-xl text-gray-600 dark:text-gray-400 max-w-2xl mx-auto">
             Why pay monthly fees for {competitor} when you can self-host{" "}
             {tool.name} for free? Let's look at the facts.
           </p>
@@ -119,23 +119,23 @@ export default async function VsPage({ params }: Props) {
           </div>
 
           {/* 左侧：SaaS (反派) */}
-          <div className="bg-white rounded-3xl p-8 border border-gray-200 shadow-sm opacity-80 grayscale-[0.3]">
+          <div className="bg-white dark:bg-zinc-900 rounded-3xl p-8 border border-gray-200 dark:border-zinc-800 shadow-sm opacity-80 grayscale-[0.3]">
             <div className="text-center mb-8">
-              <h3 className="text-2xl font-bold text-gray-500">{competitor}</h3>
+              <h3 className="text-2xl font-bold text-gray-500 dark:text-gray-400">{competitor}</h3>
               <p className="text-red-500 font-medium text-sm mt-1">
                 The Expensive Option
               </p>
             </div>
             <ul className="space-y-6">
-              <li className="flex items-start gap-3 text-gray-600">
+              <li className="flex items-start gap-3 text-gray-600 dark:text-gray-400">
                 <X className="text-red-500 shrink-0" />
                 <span>Closed Source (Black box)</span>
               </li>
-              <li className="flex items-start gap-3 text-gray-600">
+              <li className="flex items-start gap-3 text-gray-600 dark:text-gray-400">
                 <X className="text-red-500 shrink-0" />
                 <span>Expensive monthly fees per user</span>
               </li>
-              <li className="flex items-start gap-3 text-gray-600">
+              <li className="flex items-start gap-3 text-gray-600 dark:text-gray-400">
                 <X className="text-red-500 shrink-0" />
                 <span>Data stored on their servers</span>
               </li>
@@ -143,37 +143,37 @@ export default async function VsPage({ params }: Props) {
           </div>
 
           {/* 右侧：Open Source (主角) */}
-          <div className="bg-white rounded-3xl p-8 border-2 border-indigo-500 shadow-2xl relative overflow-hidden transform md:-translate-y-4">
+          <div className="bg-white dark:bg-zinc-900 rounded-3xl p-8 border-2 border-indigo-500 shadow-2xl relative overflow-hidden transform md:-translate-y-4">
             <div className="absolute top-0 right-0 bg-indigo-500 text-white text-xs font-bold px-3 py-1 rounded-bl-xl">
               WINNER
             </div>
             <div className="text-center mb-8">
-              <h3 className="text-2xl font-bold text-indigo-700">
+              <h3 className="text-2xl font-bold text-indigo-700 dark:text-indigo-400">
                 {tool.name}
               </h3>
-              <p className="text-green-600 font-medium text-sm mt-1">
+              <p className="text-green-600 dark:text-green-500 font-medium text-sm mt-1">
                 The Freedom Choice
               </p>
             </div>
             <ul className="space-y-6">
-              <li className="flex items-start gap-3 text-gray-800 font-medium">
+              <li className="flex items-start gap-3 text-gray-800 dark:text-gray-200 font-medium">
                 <Check className="text-green-500 shrink-0" />
                 <span>100% Open Source Code</span>
               </li>
-              <li className="flex items-start gap-3 text-gray-800 font-medium">
+              <li className="flex items-start gap-3 text-gray-800 dark:text-gray-200 font-medium">
                 <Check className="text-green-500 shrink-0" />
                 <span>Free forever (Self-hosted)</span>
               </li>
-              <li className="flex items-start gap-3 text-gray-800 font-medium">
+              <li className="flex items-start gap-3 text-gray-800 dark:text-gray-200 font-medium">
                 <Check className="text-green-500 shrink-0" />
                 <span>You own your data completely</span>
               </li>
             </ul>
-            <div className="mt-8 pt-8 border-t border-gray-100">
+            <div className="mt-8 pt-8 border-t border-gray-100 dark:border-zinc-800">
               <a
                 href={trackableUrl}
                 target="_blank"
-                className="block w-full text-center bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 rounded-xl transition-all shadow-lg hover:shadow-indigo-200"
+                className="block w-full text-center bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 rounded-xl transition-all shadow-lg hover:shadow-indigo-200 dark:hover:shadow-indigo-900/50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
               >
                 Get {tool.name} Now
               </a>
@@ -186,17 +186,17 @@ export default async function VsPage({ params }: Props) {
         <SaaSTaxCalculator competitorName={competitor} toolUrl={tool.url} />
 
         {/* 4. 详细参数对比表 (Logic Support) */}
-        <div className="bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden mb-16">
-          <div className="bg-gray-50 px-8 py-4 border-b border-gray-200">
-            <h3 className="font-bold text-gray-700">Detailed Breakdown</h3>
+        <div className="bg-white dark:bg-zinc-900 rounded-3xl shadow-sm border border-gray-100 dark:border-zinc-800 overflow-hidden mb-16">
+          <div className="bg-gray-50 dark:bg-zinc-950 px-8 py-4 border-b border-gray-200 dark:border-zinc-800">
+            <h3 className="font-bold text-gray-700 dark:text-gray-300">Detailed Breakdown</h3>
           </div>
-          <div className="divide-y divide-gray-100">
+          <div className="divide-y divide-gray-100 dark:divide-zinc-800">
             {comparisons.map((row, idx) => (
               <div
                 key={idx}
-                className="grid grid-cols-3 p-6 gap-4 hover:bg-gray-50 transition-colors"
+                className="grid grid-cols-3 p-6 gap-4 hover:bg-gray-50 dark:hover:bg-zinc-800/50 transition-colors"
               >
-                <div className="col-span-3 md:col-span-1 font-bold text-gray-900 flex items-center gap-2">
+                <div className="col-span-3 md:col-span-1 font-bold text-gray-900 dark:text-gray-100 flex items-center gap-2">
                   {idx === 0 ? (
                     <Coins size={18} className="text-amber-500" />
                   ) : idx === 1 ? (
@@ -207,8 +207,8 @@ export default async function VsPage({ params }: Props) {
                   {row.feature}
                 </div>
                 <div className="col-span-3 md:col-span-2 grid grid-cols-2 gap-4 text-sm">
-                  <div className="text-gray-500">{row.saas_value}</div>
-                  <div className="text-indigo-700 font-bold">
+                  <div className="text-gray-500 dark:text-gray-400">{row.saas_value}</div>
+                  <div className="text-indigo-700 dark:text-indigo-400 font-bold">
                     {row.os_value}
                   </div>
                 </div>

@@ -1,4 +1,5 @@
 import { getAllTools, Tool } from '@/lib/db';
+import Image from 'next/image';
 import ToolGrid from '@/components/ToolGrid';
 import Newsletter from '@/components/Newsletter';
 import JsonLd from '@/components/JsonLd';
@@ -27,8 +28,6 @@ export default async function Home() {
   // 对瘦身后的数据排序
   const sortedTools = slimTools.sort((a, b) => b.stars - a.stars);
 
-  const categories = Array.from(new Set(allTools.map((t: Tool) => t.category))).filter(Boolean) as string[];
-
   const websiteSchema = {
     "@context": "https://schema.org",
     "@type": "WebSite",
@@ -55,19 +54,14 @@ export default async function Home() {
           <div className="absolute inset-0 bg-slate-900 dark:bg-zinc-950"></div>
           {/* 🔥 LCP Optimization: Use next/image with priority */}
           <div className="absolute inset-0 opacity-70 dark:opacity-50">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
+            <Image
               src="/hero-bg.png"
               alt="Background"
-              className="w-full h-full object-cover"
-            // We use standard img for simplicity here or could use Image, 
-            // but ensuring it's not lazy loaded.
-            // Actually, for LCP, an <img> tag is arguably faster than a background image if not preloaded.
-            // But wait, user requested next/image or generally optimizing.
+              fill
+              priority
+              className="object-cover"
             />
           </div>
-          {/* Better: Use CSS background but Preload it? Or stick to standard Image. */}
-          {/* Reverting to Next.js Image for Automatic Optimization if configured */}
 
           <div className="absolute inset-0 bg-gradient-to-b from-slate-900/40 via-slate-900/60 to-slate-900/90 dark:from-zinc-950/30 dark:via-zinc-950/60 dark:to-zinc-950"></div>
           <div className="hidden dark:block absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[400px] bg-indigo-500/20 rounded-full blur-[100px] opacity-60 pointer-events-none"></div>
