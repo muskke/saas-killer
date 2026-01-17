@@ -89,7 +89,7 @@ const db = new Database(dbPath);
 // 或者使用 eval(require('fs').readFileSync('./src/lib/taxonomy.ts', 'utf8')) -- 不推荐
 
 // ✅ 最佳实践：将 TAXONOMY 移到 JSON 文件，JS/TS 都可以 import
-const taxonomyModule = require('../src/lib/taxonomy.cjs'); // 我们将创建此文件
+const taxonomyModule = require('../src/lib/taxonomy.cjs');
 const TAXONOMY = taxonomyModule.TAXONOMY;
 const generateSearchQueries = taxonomyModule.generateSearchQueries;
 const SEARCH_QUERIES = generateSearchQueries();
@@ -133,26 +133,47 @@ async function fetchRepoData(query) {
 }
 
 async function main() {
+  const toolsTableInfo = db.prepare("PRAGMA table_info(tools)").all();
+  const hasStarsPrev = toolsTableInfo.some((col) => col.name === "stars_prev");
+
   // 1. 准备 SQL 语句
   const insertStmt = db.prepare(`
-    INSERT OR REPLACE INTO tools (
-      slug, name, description, category, parent_category, subcategory, stars, logo, url, license, language, updated_at, forks, issues, rich_features_json,
+    INSERT INTO tools (
+      slug, name, description, category, parent_category, subcategory,${hasStarsPrev ? " stars_prev," : ""} stars, logo, url, license, language, updated_at, forks, issues, rich_features_json,
       pricing_model, deployment_complexity, tech_stack, license_type
     ) VALUES (
-      @slug, @name, @description, @category, @parent_category, @subcategory, @stars, @logo, @url, @license, @language, @updated_at, @forks, @issues, @rich_features_json,
+      @slug, @name, @description, @category, @parent_category, @subcategory,${hasStarsPrev ? " @stars_prev," : ""} @stars, @logo, @url, @license, @language, @updated_at, @forks, @issues, @rich_features_json,
       @pricing_model, @deployment_complexity, @tech_stack, @license_type
     )
+    ON CONFLICT(slug) DO UPDATE SET
+      ${hasStarsPrev ? "stars_prev = tools.stars,\n      " : ""}name = excluded.name,
+      description = excluded.description,
+      category = excluded.category,
+      parent_category = excluded.parent_category,
+      subcategory = excluded.subcategory,
+      stars = excluded.stars,
+      logo = excluded.logo,
+      url = excluded.url,
+      license = excluded.license,
+      language = excluded.language,
+      updated_at = excluded.updated_at,
+      forks = excluded.forks,
+      issues = excluded.issues,
+      rich_features_json = excluded.rich_features_json,
+      pricing_model = excluded.pricing_model,
+      deployment_complexity = excluded.deployment_complexity,
+      tech_stack = excluded.tech_stack,
+      license_type = excluded.license_type
   `);
 
   // 预编译查询语句
   const checkStmt = db.prepare(
-    "SELECT rich_features_json, stars FROM tools WHERE slug = ?"
+    "SELECT rich_features_json, parent_category, subcategory FROM tools WHERE slug = ?"
   );
 
   const updateStatsStmt = db.prepare(`
     UPDATE tools 
-    SET stars_prev = stars,
-        stars = @stars, 
+    SET ${hasStarsPrev ? "stars_prev = stars,\n        " : ""}stars = @stars, 
         forks = @forks, 
         issues = @issues, 
         updated_at = @updated_at,
@@ -169,7 +190,7 @@ async function main() {
   `);
 
   // 🔥 流水线模式配置
-  const UPDATE_MODE = process.env.UPDATE_MODE || "incremental";
+  const UPDATE_MODE = (process.env.UPDATE_MODE || "incremental").toLowerCase() === "full" ? "full" : "incremental";
   const CONCURRENCY_LIMIT = 3; // AI 并发数
   const MAX_PENDING_ITEMS = BATCH_SIZE * 5; // 🔥 背压阈值：最多缓存 5 个 batch 的数据
   const AI_COOLDOWN_MS = 1500; // 🔥 AI 请求之间的冷却时间（毫秒），防止 Rate Limit
@@ -188,6 +209,8 @@ async function main() {
   let batchesProcessed = 0;
   let fetchComplete = false;
   let lastAiRequestTime = 0; // 上次 AI 请求的时间戳
+  const SKIP_LOG_FIRST_N = parseInt(process.env.SKIP_LOG_FIRST_N) || 20;
+  const SKIP_LOG_EVERY = parseInt(process.env.SKIP_LOG_EVERY) || 200;
 
   // 🔧 处理单个 item 的函数 (判断是否需要 AI 分析)
   const processItem = (item) => {
@@ -198,7 +221,7 @@ async function main() {
 
     if (row) {
       const rich = JSON.parse(row.rich_features_json || "{}");
-      const hasAiData = rich.long_summary && rich.category;
+      const hasAiData = !!rich.long_summary && !!row.parent_category && !!row.subcategory;
 
       if (hasAiData && UPDATE_MODE !== "full") {
         // 增量模式：只更新 GitHub 数据，不需要 AI
@@ -219,6 +242,12 @@ async function main() {
         });
         seen.add(slug);
         totalUpdated++;
+        if (totalUpdated <= SKIP_LOG_FIRST_N || (SKIP_LOG_EVERY > 0 && totalUpdated % SKIP_LOG_EVERY === 0)) {
+          console.log(`⏭️  Skip AI [${totalUpdated}]: ${slug}`);
+          if (totalUpdated === SKIP_LOG_FIRST_N && SKIP_LOG_EVERY > 0) {
+            console.log(`ℹ️  Skip logs will continue every ${SKIP_LOG_EVERY} items.`);
+          }
+        }
         return null; // 不需要 AI
       }
     }
@@ -245,7 +274,7 @@ async function main() {
           // 使用共享的 buildRichFeatures 函数
           const richFeatures = buildRichFeatures(aiData);
 
-          insertStmt.run({
+          const insertData = {
             slug: slug,
             name: item.name,
             description: aiData.tagline,
@@ -265,7 +294,13 @@ async function main() {
             forks: item.forks_count,
             issues: item.open_issues_count,
             rich_features_json: JSON.stringify(richFeatures),
-          });
+          };
+
+          if (hasStarsPrev) {
+            insertData.stars_prev = item.stargazers_count;
+          }
+
+          insertStmt.run(insertData);
 
           insertStarHistoryStmt.run({
             slug: slug,
