@@ -419,6 +419,11 @@ async function main() {
   console.log(`   📦 Total AI batches processed: ${batchesProcessed}`);
   console.log(`${'='.repeat(50)}\n`);
 
+  // 🧹 数据清理：删除 30 天前的历史记录
+  const cleanupStmt = db.prepare("DELETE FROM tool_star_history WHERE recorded_at < DATE('now', '-30 days')");
+  const cleanupResult = cleanupStmt.run();
+  console.log(`🧹 Creating space: Deleted ${cleanupResult.changes} old history records (older than 30 days).`);
+
   db.close();
 }
 
