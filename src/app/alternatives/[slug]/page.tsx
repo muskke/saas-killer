@@ -50,6 +50,12 @@ export default async function Page({ params }: Props) {
 
   if (!tool) notFound();
 
+  // 🔥 容错处理：如果不幸遇到 category 为 null 的脏数据
+  if (!tool.category) {
+    // @ts-ignore
+    tool.category = "Uncategorized";
+  }
+
   // 3. 构建结构化数据 (Schema)
   const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://saas-killer.chaos-meme.cn";
 
