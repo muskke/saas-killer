@@ -14,7 +14,9 @@ type Props = {
 
 export async function generateStaticParams() {
   const tools = await getAllTools();
-  return tools.map((tool: any) => ({ slug: tool.slug }));
+  // 🔥 只预渲染前 200 个热门工具 (SSG)，其余的走 ISR (按需生成)
+  // 这将把构建产物大小从 ~150MB 降低到 ~5MB
+  return tools.slice(0, 200).map((tool: any) => ({ slug: tool.slug }));
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {

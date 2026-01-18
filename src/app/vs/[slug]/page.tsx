@@ -13,7 +13,8 @@ type Props = {
 // 1. 生成静态路由
 export async function generateStaticParams() {
   const tools = await getAllTools();
-  return tools.map((tool) => ({
+  // 🔥 只预渲染前 200 个热门工具 (SSG)，其余的走 ISR (按需生成)
+  return tools.slice(0, 200).map((tool) => ({
     slug: tool.slug,
   }));
 }
