@@ -276,7 +276,7 @@ export default function AdBanner({ category = "" }: { category?: string }) {
 
   // 🔥 核心逻辑：关键词加权匹配 + 时效性过滤
   const getRelevantAd = (cat: string) => {
-    const normalizedCat = cat.toLowerCase();
+    const normalizedCat = (cat || "").toLowerCase();
     const today = new Date().toISOString().split("T")[0]; // YYYY-MM-DD
 
     // 🔍 辅助函数：检查广告是否有效
