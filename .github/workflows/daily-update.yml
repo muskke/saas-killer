@@ -10,6 +10,8 @@ on:
 jobs:
   update-data:
     runs-on: ubuntu-latest
+    # 超时时间（默认 6 小时会超时）
+    timeout-minutes: 360
     
     permissions:
       contents: write
@@ -34,10 +36,11 @@ jobs:
         OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
         OPENAI_BASE_URL: ${{ secrets.OPENAI_BASE_URL }}
         OPENAI_MODEL_ID: ${{ secrets.OPENAI_MODEL_ID || 'gemini-3-flash-preview' }}
-        BATCH_SIZE: ${{ secrets.BATCH_SIZE || 8 }}
-        MAX_RETRIES: ${{ secrets.MAX_RETRIES || 5 }}
+        BATCH_SIZE: ${{ secrets.BATCH_SIZE || 10 }}
+        MAX_RETRIES: ${{ secrets.MAX_RETRIES || 3 }}
         DATABASE_PATH: ${{ secrets.DATABASE_PATH || 'data/tools.db' }}
         UPDATE_MODE: ${{ secrets.UPDATE_MODE || 'incremental' }}
+        SOFT_TIMEOUT_MINUTES: ${{ secrets.SOFT_TIMEOUT_MINUTES || 330 }}
       run: |
         echo "🕷️ Starting crawler..."
         node scripts/fetch-github-data.js

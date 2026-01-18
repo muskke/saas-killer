@@ -189,17 +189,45 @@ async function main() {
     VALUES (@slug, @stars, DATE('now'))
   `);
 
+  // 🔥 新增：AI 分析失败时，为新工具插入基础数据（不含 AI 分析结果）
+  // 使用 INSERT OR IGNORE，如果工具已存在则跳过（由 updateStatsStmt 处理）
+  const insertBasicStmt = db.prepare(`
+    INSERT OR IGNORE INTO tools (
+      slug, name, description, stars, logo, url, license, language, updated_at, forks, issues
+    ) VALUES (
+      @slug, @name, @description, @stars, @logo, @url, @license, @language, @updated_at, @forks, @issues
+    )
+  `);
+
   // 🔥 流水线模式配置
   const UPDATE_MODE = (process.env.UPDATE_MODE || "incremental").toLowerCase() === "full" ? "full" : "incremental";
   const CONCURRENCY_LIMIT = 3; // AI 并发数
   const MAX_PENDING_ITEMS = BATCH_SIZE * 5; // 🔥 背压阈值：最多缓存 5 个 batch 的数据
   const AI_COOLDOWN_MS = 1500; // 🔥 AI 请求之间的冷却时间（毫秒），防止 Rate Limit
 
+  // 🔥 软超时配置：确保在 GitHub Actions 超时前完成提交
+  const SCRIPT_START_TIME = Date.now();
+  const SOFT_TIMEOUT_MINUTES = parseInt(process.env.SOFT_TIMEOUT_MINUTES) || 540; // 默认 9 小时，留 1 小时余量
+  const SOFT_TIMEOUT_MS = SOFT_TIMEOUT_MINUTES * 60 * 1000;
+
+  // 检查是否已超时
+  const isTimedOut = () => {
+    const elapsed = Date.now() - SCRIPT_START_TIME;
+    return elapsed >= SOFT_TIMEOUT_MS;
+  };
+
+  // 获取剩余时间（分钟）
+  const getRemainingMinutes = () => {
+    const elapsed = Date.now() - SCRIPT_START_TIME;
+    return Math.max(0, Math.round((SOFT_TIMEOUT_MS - elapsed) / 60000));
+  };
+
   console.log(`\n🛡️ Update Mode: ${UPDATE_MODE}`);
   console.log(`🚀 Pipeline Mode: GitHub fetch + AI analysis running in parallel`);
   console.log(`⚡ AI Concurrency: ${CONCURRENCY_LIMIT}`);
   console.log(`📦 Backpressure threshold: ${MAX_PENDING_ITEMS} items`);
-  console.log(`⏱️ AI cooldown: ${AI_COOLDOWN_MS}ms between requests\n`);
+  console.log(`⏱️ AI cooldown: ${AI_COOLDOWN_MS}ms between requests`);
+  console.log(`⏰ Soft timeout: ${SOFT_TIMEOUT_MINUTES} minutes (${(SOFT_TIMEOUT_MINUTES / 60).toFixed(1)} hours)\n`);
 
   // 状态追踪
   const seen = new Set();
@@ -265,56 +293,152 @@ async function main() {
       // 🔥 使用共享的 AI 分析器
       const aiResults = await analyzer.analyzeBatch(batch);
 
+      // 🔥 检查是否有任何结果（空对象表示整个批次失败）
+      const hasAnyResults = Object.keys(aiResults).length > 0;
+
       // 同步事务写入
       const transaction = db.transaction((items) => {
+        let successCount = 0;
+        let skippedCount = 0;
+
         for (const item of items) {
           const slug = item.name.toLowerCase();
-          const aiData = aiResults[slug] || getFallbackData(item);
+          const aiData = aiResults[slug];
 
-          // 使用共享的 buildRichFeatures 函数
-          const richFeatures = buildRichFeatures(aiData);
+          if (aiData) {
+            // ✅ AI 分析成功：完整保存
+            const richFeatures = buildRichFeatures(aiData);
 
-          const insertData = {
-            slug: slug,
-            name: item.name,
-            description: aiData.tagline,
-            category: aiData.category,
-            parent_category: aiData.parent_category,
-            subcategory: aiData.category,
-            pricing_model: aiData.pricing_model || "Fully Open Source",
-            deployment_complexity: aiData.deployment_complexity || 1,
-            tech_stack: aiData.tech_stack || "Unknown",
-            license_type: aiData.license_type || item.license?.name || "Unknown",
-            stars: item.stargazers_count,
-            logo: item.owner.avatar_url,
-            url: item.homepage || item.html_url,
-            license: (item.license && item.license.spdx_id !== "NOASSERTION") ? item.license.spdx_id : (item.license?.name || "Unknown"),
-            language: item.language,
-            updated_at: item.pushed_at,
-            forks: item.forks_count,
-            issues: item.open_issues_count,
-            rich_features_json: JSON.stringify(richFeatures),
-          };
+            const insertData = {
+              slug: slug,
+              name: item.name,
+              description: aiData.tagline,
+              category: aiData.category,
+              parent_category: aiData.parent_category,
+              subcategory: aiData.category,
+              pricing_model: aiData.pricing_model || "Fully Open Source",
+              deployment_complexity: aiData.deployment_complexity || 1,
+              tech_stack: aiData.tech_stack || "Unknown",
+              license_type: aiData.license_type || item.license?.name || "Unknown",
+              stars: item.stargazers_count,
+              logo: item.owner.avatar_url,
+              url: item.homepage || item.html_url,
+              license: (item.license && item.license.spdx_id !== "NOASSERTION") ? item.license.spdx_id : (item.license?.name || "Unknown"),
+              language: item.language,
+              updated_at: item.pushed_at,
+              forks: item.forks_count,
+              issues: item.open_issues_count,
+              rich_features_json: JSON.stringify(richFeatures),
+            };
 
-          if (hasStarsPrev) {
-            insertData.stars_prev = item.stargazers_count;
+            if (hasStarsPrev) {
+              insertData.stars_prev = item.stargazers_count;
+            }
+
+            insertStmt.run(insertData);
+            successCount++;
+          } else {
+            // ⏭️ AI 分析失败：只保存 GitHub 统计数据，不保存 AI 结果
+            // 这样下次运行时会自动重试 AI 分析
+
+            // 先尝试 INSERT（针对新工具），如果已存在则跳过
+            insertBasicStmt.run({
+              slug: slug,
+              name: item.name,
+              description: item.description || "No description",
+              stars: item.stargazers_count,
+              logo: item.owner.avatar_url,
+              url: item.homepage || item.html_url,
+              license: (item.license && item.license.spdx_id !== "NOASSERTION") ? item.license.spdx_id : (item.license?.name || "Unknown"),
+              language: item.language || "Unknown",
+              updated_at: item.pushed_at,
+              forks: item.forks_count,
+              issues: item.open_issues_count,
+            });
+
+            // 再 UPDATE（针对已存在的工具）
+            updateStatsStmt.run({
+              stars: item.stargazers_count,
+              forks: item.forks_count,
+              issues: item.open_issues_count,
+              updated_at: item.pushed_at,
+              url: item.homepage || item.html_url,
+              license: (item.license && item.license.spdx_id !== "NOASSERTION") ? item.license.spdx_id : (item.license?.name || "Unknown"),
+              language: item.language || "Unknown",
+              logo: item.owner.avatar_url,
+              slug: slug
+            });
+            skippedCount++;
+            console.log(`⏭️  [${slug}] AI failed, will retry next run.`);
           }
 
-          insertStmt.run(insertData);
-
+          // 无论如何都记录 star 历史
           insertStarHistoryStmt.run({
             slug: slug,
             stars: item.stargazers_count
           });
         }
+
+        return { successCount, skippedCount };
       });
 
-      transaction(batch);
+      const result = transaction(batch);
       batchesProcessed++;
-      console.log(`💾 [Batch ${batchId}/${totalBatches}] SAVED.`);
+
+      if (result.skippedCount > 0) {
+        console.log(`💾 [Batch ${batchId}/${totalBatches}] SAVED: ${result.successCount} success, ${result.skippedCount} pending retry.`);
+      } else {
+        console.log(`💾 [Batch ${batchId}/${totalBatches}] SAVED.`);
+      }
 
     } catch (err) {
       console.error(`❌ [Batch ${batchId}] Failed:`, err.message);
+
+      // 🔥 即使整个批次失败，也尝试更新 GitHub 统计数据
+      console.log(`📊 [Batch ${batchId}] Saving GitHub stats only (AI will retry next run)...`);
+      try {
+        const statsTransaction = db.transaction((items) => {
+          for (const item of items) {
+            const slug = item.name.toLowerCase();
+
+            // 先尝试 INSERT（针对新工具）
+            insertBasicStmt.run({
+              slug: slug,
+              name: item.name,
+              description: item.description || "No description",
+              stars: item.stargazers_count,
+              logo: item.owner.avatar_url,
+              url: item.homepage || item.html_url,
+              license: (item.license && item.license.spdx_id !== "NOASSERTION") ? item.license.spdx_id : (item.license?.name || "Unknown"),
+              language: item.language || "Unknown",
+              updated_at: item.pushed_at,
+              forks: item.forks_count,
+              issues: item.open_issues_count,
+            });
+
+            // 再 UPDATE（针对已存在的工具）
+            updateStatsStmt.run({
+              stars: item.stargazers_count,
+              forks: item.forks_count,
+              issues: item.open_issues_count,
+              updated_at: item.pushed_at,
+              url: item.homepage || item.html_url,
+              license: (item.license && item.license.spdx_id !== "NOASSERTION") ? item.license.spdx_id : (item.license?.name || "Unknown"),
+              language: item.language || "Unknown",
+              logo: item.owner.avatar_url,
+              slug: slug
+            });
+            insertStarHistoryStmt.run({
+              slug: slug,
+              stars: item.stargazers_count
+            });
+          }
+        });
+        statsTransaction(batch);
+        console.log(`📊 [Batch ${batchId}] GitHub stats saved. AI analysis pending for next run.`);
+      } catch (statsErr) {
+        console.error(`❌ [Batch ${batchId}] Even stats update failed:`, statsErr.message);
+      }
     }
   };
 
@@ -330,6 +454,19 @@ async function main() {
 
     for (const query of SEARCH_QUERIES) {
       queryIndex++;
+
+      // 🔥 软超时检查：确保有足够时间完成提交
+      if (isTimedOut()) {
+        console.log(`\n⏰ SOFT TIMEOUT reached after ${SOFT_TIMEOUT_MINUTES} minutes!`);
+        console.log(`   📊 Progress: ${queryIndex - 1}/${SEARCH_QUERIES.length} queries completed`);
+        console.log(`   🛑 Stopping new work to ensure data is committed...`);
+        break; // 跳出循环，进入收尾阶段
+      }
+
+      // 每 50 个 query 显示一次剩余时间
+      if (queryIndex % 50 === 0) {
+        console.log(`   ⏰ Remaining time: ${getRemainingMinutes()} minutes`);
+      }
 
       // 🔥 背压检查：如果队列已满，等待 AI 消费一些
       while (pendingItems.length >= MAX_PENDING_ITEMS) {
