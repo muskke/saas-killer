@@ -310,3 +310,81 @@ body {
 .animate-twinkle {
   animation: twinkle 1.5s ease-in-out infinite;
 }
+
+/* ============================================
+   🌌 Detail Page Polish Animations
+   ============================================ */
+
+/* Aurora Background */
+@keyframes aurora {
+  0% {
+    transform: rotate(0deg) scale(1.0);
+  }
+
+  50% {
+    transform: rotate(180deg) scale(1.1);
+  }
+
+  100% {
+    transform: rotate(360deg) scale(1.0);
+  }
+}
+
+.animate-aurora {
+  animation: aurora 20s linear infinite;
+}
+
+/* Slide Up & Fade In (Staggered) */
+@keyframes slide-up-fade {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-slide-up-fade {
+  animation: slide-up-fade 0.8s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+}
+
+/* Delay Utilites */
+.delay-100 {
+  animation-delay: 100ms;
+}
+
+.delay-200 {
+  animation-delay: 200ms;
+}
+
+.delay-300 {
+  animation-delay: 300ms;
+}
+
+.delay-400 {
+  animation-delay: 400ms;
+}
+
+/* Pulse Glow (For Logo) */
+@keyframes pulse-glow {
+
+  0%,
+  100% {
+    opacity: 0.5;
+    transform: scale(1);
+    filter: blur(20px);
+  }
+
+  50% {
+    opacity: 0.8;
+    transform: scale(1.1);
+    filter: blur(25px);
+  }
+}
+
+.animate-pulse-glow {
+  animation: pulse-glow 4s ease-in-out infinite;
+}
