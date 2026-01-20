@@ -64,6 +64,10 @@ export default async function CategoryPage({ params }: Props) {
         }
     }));
 
+    // 🔥 最佳实践：只传递前 50 个工具用于首屏绘制 (ISR 安全)
+    // 剩下的数据将通过 ToolGrid 异步补全
+    const initialTools = slimTools.slice(0, 50);
+
     return (
         <main className="min-h-screen font-sans bg-gray-50 dark:bg-zinc-950 text-gray-900 dark:text-white transition-colors duration-300">
 
@@ -82,7 +86,7 @@ export default async function CategoryPage({ params }: Props) {
                 </div>
             </section>
 
-            <ToolGrid tools={slimTools} initialCategory={category.id} />
+            <ToolGrid tools={initialTools} initialCategory={category.id} />
         </main>
     );
 }

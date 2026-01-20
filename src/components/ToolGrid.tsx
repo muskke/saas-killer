@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo, useRef, useTransition } from 'react';
+import { useState, useMemo, useRef, useTransition, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { Search, Star, ArrowRight, Zap, Flame, Sparkles } from 'lucide-react';
@@ -264,13 +264,37 @@ const SponsoredCard = () => {
 }
 
 
-export default function ToolGrid({ tools, initialCategory = 'All' }: { tools: Tool[], initialCategory?: string }) {
+export default function ToolGrid({ tools: initialTools, initialCategory = 'All' }: { tools: Tool[], initialCategory?: string }) {
+  const [allTools, setAllTools] = useState<Tool[]>(initialTools);
   const [search, setSearch] = useState('');
   const [deferredSearch, setDeferredSearch] = useState('');
   const [isPending, startTransition] = useTransition();
   const [activeParent, setActiveParent] = useState(initialCategory);
   const [activeSub, setActiveSub] = useState('All');
   const [displayCount, setDisplayCount] = useState(23); // 23 + 1 赞助商卡片 = 24（3的倍数）
+  const [isHydrated, setIsHydrated] = useState(false);
+
+  // 🚀 Background Hydration: Fetch the full toolset after initial mount
+  // This keeps the initial HTML payload (ISR) small while allowing full-site search/filter
+  useEffect(() => {
+    const fetchFullData = async () => {
+      try {
+        const res = await fetch('/api/tools');
+        if (res.ok) {
+          const fullData = await res.json();
+          // Merge or replace? Since initialTools is already "slim", we just replace to ensure latest data
+          setAllTools(fullData);
+          setIsHydrated(true);
+        }
+      } catch (err) {
+        console.error("Failed to hydrate tools in background:", err);
+      }
+    };
+
+    // Tiny delay to ensure critical path is clear
+    const timer = setTimeout(fetchFullData, 1000);
+    return () => clearTimeout(timer);
+  }, []);
 
   // Reset subcategory when parent changes
   const handleParentChange = (pid: string) => {
@@ -280,7 +304,7 @@ export default function ToolGrid({ tools, initialCategory = 'All' }: { tools: To
   };
 
   const filteredTools = useMemo(() => {
-    return tools.filter((tool) => {
+    return allTools.filter((tool) => {
       if (!tool || !tool.name) return false;
       const toolName = (tool.name || '').toLowerCase();
       const toolDesc = (tool.description || '').toLowerCase();
@@ -308,7 +332,7 @@ export default function ToolGrid({ tools, initialCategory = 'All' }: { tools: To
 
       return matchesSearch && matchesCategory;
     });
-  }, [tools, deferredSearch, activeParent, activeSub]);
+  }, [allTools, deferredSearch, activeParent, activeSub]);
 
   const visibleTools = filteredTools.slice(0, displayCount);
 

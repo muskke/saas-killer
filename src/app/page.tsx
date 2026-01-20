@@ -26,7 +26,11 @@ export default async function Home() {
   }));
 
   // 对瘦身后的数据排序
-  const sortedTools = slimTools.sort((a, b) => b.stars - a.stars);
+  // 🔥 最佳实践：只传递前 50 个工具给 Client Component 用于 SEO 和首屏显示
+  // 其余的数据将通过 ToolGrid 内部的 useEffect 从 /api/tools 异步加载 (Hybrid Hydration)
+  const initialTools = slimTools
+    .sort((a: any, b: any) => b.stars - a.stars)
+    .slice(0, 50);
 
   const websiteSchema = {
     "@context": "https://schema.org",
@@ -94,7 +98,7 @@ export default async function Home() {
       {/* 2. Client Side Interaction (交互引擎) */}
       {/* 我们把数据传给 ToolGrid，让它在浏览器里处理搜索 */}
       {/* 🚀 传给组件的是 slimTools，体积只有原来的 1/10 */}
-      <ToolGrid tools={sortedTools} />
+      <ToolGrid tools={initialTools} />
       <Newsletter />
 
 
