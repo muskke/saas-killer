@@ -47,9 +47,22 @@ export default async function CategoryPage({ params }: Props) {
         notFound();
     }
 
-    // 筛选出属于该分类的工具，用于传给 ToolGrid (虽然 ToolGrid 自己也会筛选，但如果是作为 Initial State 更好)
-    // 其实 ToolGrid 接收的是全部 tools，然后通过 initialCategory state 来控制显示
-    // 所以我们可以直接把全部 tools 传进去，只要设置 initialCategory={category.id} 即可
+    // 🔥 核心优化：在传给 Client Component 之前，手动创建一个“瘦身版”数组
+    // 防止 Vercel ISR "Oversized Incremental Static Regeneration" 报错 (>19MB)
+    // 我们只提取 ToolGrid 真正需要的字段，去掉了 huge 的 rich_features (pros/cons/tables)
+    const slimTools = tools.map((tool) => ({
+        slug: tool.slug,
+        name: tool.name,
+        description: tool.description?.slice(0, 100) + (tool.description?.length > 100 ? '...' : ''),
+        category: tool.category,
+        parent_category: tool.parent_category,
+        subcategory: tool.subcategory,
+        stars: tool.stars,
+        logo: tool.logo,
+        rich_features: {
+            competitor_name: tool.rich_features?.competitor_name
+        }
+    }));
 
     return (
         <main className="min-h-screen font-sans bg-gray-50 dark:bg-zinc-950 text-gray-900 dark:text-white transition-colors duration-300">
@@ -69,7 +82,7 @@ export default async function CategoryPage({ params }: Props) {
                 </div>
             </section>
 
-            <ToolGrid tools={tools} initialCategory={category.id} />
+            <ToolGrid tools={slimTools} initialCategory={category.id} />
         </main>
     );
 }
